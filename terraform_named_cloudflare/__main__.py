@@ -31,7 +31,7 @@ def comment(record):
 
 
 def fix(name):
-    name = name.strip('.').replace('.', '_')
+    name = name['Name'].replace('.', '_')
     if re.match(pattern=r'^\d', string=name):
         name = '_{}'.format(name)
     if name.startswith('*'):
@@ -41,30 +41,31 @@ def fix(name):
 
 def a(record):
     # match = re.match(A, record)
-    match = (record.type == 'A')
+    print(record)
+    match = (record['Type'] == 'A')
     if match:
-        resource = fix(match.group(1))
+        resource = fix(record)
         if resource in resources['A']:
             return False
         resources['A'][resource] = {
-            'name': match.group(1),
-            'ttl': match.group(2),
-            'value': match.group(3)
+            'name': record['Name'],
+            'ttl': record['TTL'],
+            'value': record['ResourceRecords'][0]['Value']
         }
         return True
     return False
 
 
 def aaaa(record):
-    match = (record.type == 'AAAA')
+    match = (record['Type'] == 'AAAA')
     if match:
-        resource = fix(match.group(1))
+        resource = fix(record)
         if resource in resources['AAAA']:
             return False
         resources['AAAA'][resource] = {
-            'name': match.group(1),
-            'ttl': match.group(2),
-            'value': match.group(3)
+            'name': record['Name'],
+            'ttl': record['TTL'],
+            'value': record['ResourceRecords'][0]['Value']
         }
         return True
     return False
@@ -72,15 +73,15 @@ def aaaa(record):
 
 def cname(record):
     # match = re.match(CNAME, record)
-    match = (record.type == 'CNAME')
+    match = (record['Type'] == 'CNAME')
     if match:
-        resource = fix(match.group(1))
+        resource = fix(record)
         if resource in resources['CNAME']:
             return False
         resources['CNAME'][resource] = {
-            'name': match.group(1),
-            'ttl': match.group(2),
-            'value': match.group(3).strip('.')
+            'name': record['Name'],
+            'ttl': record['TTL'],
+            'value': record['ResourceRecords'][0]['Value']
         }
         return True
     return False
@@ -88,9 +89,9 @@ def cname(record):
 
 def mx(record):
     # match = re.match(MX, record)
-    match = false
+    match = False
     if match:
-        resource = fix(match.group(1))
+        resource = fix(record)
         if resource in resources['MX']:
             return False
         resources['MX'][resource] = {
@@ -105,6 +106,7 @@ def mx(record):
 
 def srv(record):
     # match = re.match(SRV, record)
+    match=False
     if match:
         resource = fix(match.group(1))
         if resource in resources['SRV']:
@@ -126,7 +128,7 @@ def srv(record):
 
 def txt(record):
     # match = re.match(TXT, record)
-    match = false
+    match = False   
     if match:
         resource = fix(match.group(1))
         if resource in resources['TXT']:
