@@ -19,7 +19,7 @@ resources = {
     'MX': {},
     'SRV': {},
     'TXT': {},
-    'NS': {}
+    # 'NS': {}
 }
 
 
@@ -78,11 +78,18 @@ def cname(record):
         resource = fix(record)
         if resource in resources['CNAME']:
             return False
-        resources['CNAME'][resource] = {
-            'name': record['Name'],
-            'ttl': record['TTL'],
-            'value': record['ResourceRecords'][0]['Value']
-        }
+        if 'ResourceRecords' in  record:      
+            resources['CNAME'][resource] = {
+                'name': record['Name'],
+                'ttl': record['TTL'],
+                'value': record['ResourceRecords'][0]['Value']
+            }  
+        elif 'AliasTarget' in record:
+            resources['CNAME'][resource] = {
+                'name': record['Name'],
+                # 'ttl': record['TTL'],
+                'value': record['AliasTarget']['DNSName']
+            }   
         return True
     return False
 
@@ -128,9 +135,9 @@ def srv(record):
 
 def txt(record):
     # match = re.match(TXT, record)
-    match = False   
+    match = (record['Type'] == 'TXT')
     if match:
-        resource = fix(match.group(1))
+        resource = fix(record)
         if resource in resources['TXT']:
             return False
         value = match.group(3).replace('"', '')
@@ -140,8 +147,8 @@ def txt(record):
         if not value:
             return True
         resources['TXT'][resource] = {
-            'name': match.group(1),
-            'ttl': match.group(2),
+            'name': record['Name'],
+            'ttl': record['TTL'],
             'value': value
         }
         return True
