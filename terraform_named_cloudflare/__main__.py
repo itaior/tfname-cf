@@ -3,6 +3,7 @@
 import argparse
 import jinja2
 import re
+import json
 
 A = re.compile(pattern=r'^([*a-zA-z0-9.-]+)\s+(\d+)?\s+?IN\s+A\s+(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})')
 AAAA = re.compile(pattern=r'^([*a-zA-z0-9.-]+)\s+(\d+)?\s+IN\s+AAAA\s+(.[^$]*)')
@@ -17,12 +18,13 @@ resources = {
     'CNAME': {},
     'MX': {},
     'SRV': {},
-    'TXT': {}
+    'TXT': {},
+    'NS': {}
 }
 
 
 def comment(record):
-    match = re.match(r'^;.*', record)
+    # match = re.match(r'^;.*', record)
     if match:
         return True
     return False
@@ -38,7 +40,8 @@ def fix(name):
 
 
 def a(record):
-    match = re.match(A, record)
+    # match = re.match(A, record)
+    match = (record.type == 'A')
     if match:
         resource = fix(match.group(1))
         if resource in resources['A']:
@@ -53,7 +56,7 @@ def a(record):
 
 
 def aaaa(record):
-    match = re.match(AAAA, record)
+    match = (record.type == 'AAAA')
     if match:
         resource = fix(match.group(1))
         if resource in resources['AAAA']:
@@ -68,7 +71,8 @@ def aaaa(record):
 
 
 def cname(record):
-    match = re.match(CNAME, record)
+    # match = re.match(CNAME, record)
+    match = (record.type == 'CNAME')
     if match:
         resource = fix(match.group(1))
         if resource in resources['CNAME']:
@@ -83,7 +87,8 @@ def cname(record):
 
 
 def mx(record):
-    match = re.match(MX, record)
+    # match = re.match(MX, record)
+    match = false
     if match:
         resource = fix(match.group(1))
         if resource in resources['MX']:
@@ -99,7 +104,7 @@ def mx(record):
 
 
 def srv(record):
-    match = re.match(SRV, record)
+    # match = re.match(SRV, record)
     if match:
         resource = fix(match.group(1))
         if resource in resources['SRV']:
@@ -120,7 +125,8 @@ def srv(record):
 
 
 def txt(record):
-    match = re.match(TXT, record)
+    # match = re.match(TXT, record)
+    match = false
     if match:
         resource = fix(match.group(1))
         if resource in resources['TXT']:
@@ -172,22 +178,24 @@ def parse_arguments():
 
 
 def parse_zone(zone_file):
-    with open(zone_file, 'r') as fp:
-        for record in fp.read().split('\n'):
-            if not comment(record=record):
-                if a(record=record):
-                    continue
-                if aaaa(record=record):
-                    continue
-                if cname(record=record):
-                    continue
-                if mx(record=record):
-                    continue
-                if srv(record=record):
-                    continue
-                if txt(record=record):
-                    continue
-                print(record)
+    with open(zone_file, 'r') as json_file:
+        data = json.load(json_file)
+        for record in data['ResourceRecordSets']:
+            print(record)
+            # if not comment(record=record):
+            if a(record=record):
+                continue
+            if aaaa(record=record):
+                continue
+            if cname(record=record):
+                continue
+            if mx(record=record):
+                continue
+            if srv(record=record):
+                continue
+            if txt(record=record):
+                continue
+            print(record)
 
 
 def render(known_args):
