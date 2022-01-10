@@ -1,3 +1,5 @@
+# This project was forked from https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare
+
 # terraform-named-cloudflare
 
 Python module and tool to easily convert Bind9 (named) zones into Terraform
@@ -31,7 +33,11 @@ python3 setup.py install
 
 ## Usage
 
+* export the aws account 
+AWS_EXPORT=<PROFILE>
+
 Example usage scenario is the next:
+**NOTE TODO** - the script still asking for a file even though we run with out a file. we will fix that. So for now we need to pass a mock file just for the script to run.
 
 ```bash
 terraform-named-cloudflare \
