@@ -6,7 +6,7 @@ import re
 import boto3
 import os
 
-ACCOUNT="Bridgevine"
+ACCOUNTID="9037"
 
 resources = {
     'A': {},
@@ -52,6 +52,7 @@ def a(record):
         elif 'AliasTarget' in record:
             resources['A'][resource] = {
                 'name': record['Name'],
+                'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }   
         return True
@@ -73,6 +74,7 @@ def aaaa(record):
         elif 'AliasTarget' in record:
             resources['AAAA'][resource] = {
                 'name': record['Name'],
+                'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }  
         return True
@@ -95,6 +97,7 @@ def cname(record):
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
                 'name': record['Name'],
+                'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }   
         return True
@@ -208,11 +211,11 @@ def parse_zone(data):
 def render(known_args, zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     template = env.get_template('variables.tf.j2')
-    with open("./"+ACCOUNT+"/"+zone["Name"]+'/variables.tf', 'w') as target:
+    with open("./"+ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
         target.write(template.render(cloudflare_zone_id=known_args.zone_id, cloudflare_zone_name=known_args.zone_name))
     for item in resources:
         template = env.get_template('{}.tf.j2'.format(item))
-        with open("./"+ACCOUNT+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
+        with open("./"+ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
             target.write(template.render(resources=resources[item]))
 
 
@@ -220,11 +223,11 @@ def main():
     known_args, unknown_args = parse_arguments().parse_known_args()
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
-    os.mkdir("./"+ACCOUNT)
+    os.mkdir("./"+ACCOUNTID)
     for zone in hostedzone["HostedZones"]:
         if not zone["Config"]["PrivateZone"]:
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"])
-            os.mkdir("./"+ACCOUNT+"/"+zone["Name"])
+            os.mkdir("./"+ACCOUNTID+"/"+zone["Name"])
             parse_zone(rs)
             render(known_args, zone)
 
