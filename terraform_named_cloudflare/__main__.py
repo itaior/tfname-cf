@@ -3,14 +3,10 @@
 import argparse
 import jinja2
 import re
-import json
+import boto3
+import os
 
-A = re.compile(pattern=r'^([*a-zA-z0-9.-]+)\s+(\d+)?\s+?IN\s+A\s+(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})')
-AAAA = re.compile(pattern=r'^([*a-zA-z0-9.-]+)\s+(\d+)?\s+IN\s+AAAA\s+(.[^$]*)')
-CNAME = re.compile(pattern=r'^([*a-zA-z0-9.-]+)\s+(\d+)?\s+?IN\s+CNAME\s+([a-zA-z0-9.-]+)')
-MX = re.compile(pattern=r'^([a-zA-z0-9.-]+)\s+(\d+)?\s+?IN\s+MX\s+(\d+)\s+([a-zA-z0-9.-]+)')
-SRV = re.compile(pattern=r'^((_.[^.]*).(_[^.][a-z]+).?(.[^\s]*)?)\s+(\d+)\s+IN\s+SRV\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*)')
-TXT = re.compile(pattern=r'^([a-zA-z0-9.-]+)\s+(\d+)?\s+?IN\s+TXT\s+(.*)')
+ACCOUNT="863746589073"
 
 resources = {
     'A': {},
@@ -47,11 +43,17 @@ def a(record):
         resource = fix(record)
         if resource in resources['A']:
             return False
-        resources['A'][resource] = {
-            'name': record['Name'],
-            'ttl': record['TTL'],
-            'value': record['ResourceRecords'][0]['Value']
-        }
+        if 'ResourceRecords' in  record:      
+            resources['A'][resource] = {
+                'name': record['Name'],
+                'ttl': record['TTL'],
+                'value': record['ResourceRecords'][0]['Value']
+            }
+        elif 'AliasTarget' in record:
+            resources['A'][resource] = {
+                'name': record['Name'],
+                'value': record['AliasTarget']['DNSName']
+            }   
         return True
     return False
 
@@ -62,11 +64,17 @@ def aaaa(record):
         resource = fix(record)
         if resource in resources['AAAA']:
             return False
-        resources['AAAA'][resource] = {
-            'name': record['Name'],
-            'ttl': record['TTL'],
-            'value': record['ResourceRecords'][0]['Value']
-        }
+        if 'ResourceRecords' in  record:      
+            resources['AAAA'][resource] = {
+                'name': record['Name'],
+                'ttl': record['TTL'],
+                'value': record['ResourceRecords'][0]['Value']
+            }
+        elif 'AliasTarget' in record:
+            resources['AAAA'][resource] = {
+                'name': record['Name'],
+                'value': record['AliasTarget']['DNSName']
+            }  
         return True
     return False
 
@@ -87,7 +95,6 @@ def cname(record):
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
                 'name': record['Name'],
-                # 'ttl': record['TTL'],
                 'value': record['AliasTarget']['DNSName']
             }   
         return True
@@ -140,7 +147,7 @@ def txt(record):
         resource = fix(record)
         if resource in resources['TXT']:
             return False
-        value = match.group(3).replace('"', '')
+        value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
         # Silently ignore TXT records with empty string values as not supported by CloudFlare
@@ -163,13 +170,6 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-f',
-        '--file',
-        help='Path to the Bind9 zone file to be converted',
-        required=True,
-        type=str
-    )
-    parser.add_argument(
         '-i',
         '--zone-id',
         default=str(),
@@ -186,42 +186,47 @@ def parse_arguments():
     return parser
 
 
-def parse_zone(zone_file):
-    with open(zone_file, 'r') as json_file:
-        data = json.load(json_file)
-        for record in data['ResourceRecordSets']:
-            print(record)
-            # if not comment(record=record):
-            if a(record=record):
-                continue
-            if aaaa(record=record):
-                continue
-            if cname(record=record):
-                continue
-            if mx(record=record):
-                continue
-            if srv(record=record):
-                continue
-            if txt(record=record):
-                continue
-            print(record)
+def parse_zone(data):
+    for record in data['ResourceRecordSets']:
+        print(record)
+        # if not comment(record=record):
+        if a(record=record):
+            continue
+        if aaaa(record=record):
+            continue
+        if cname(record=record):
+            continue
+        if mx(record=record):
+            continue
+        if srv(record=record):
+            continue
+        if txt(record=record):
+            continue
+        print(record)
 
 
-def render(known_args):
+def render(known_args, zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     template = env.get_template('variables.tf.j2')
-    with open('variables.tf', 'w') as target:
+    with open("./"+ACCOUNT+"/"+zone["Name"]+'/variables.tf', 'w') as target:
         target.write(template.render(cloudflare_zone_id=known_args.zone_id, cloudflare_zone_name=known_args.zone_name))
     for item in resources:
         template = env.get_template('{}.tf.j2'.format(item))
-        with open('{}.tf'.format(item), 'w') as target:
+        with open("./"+ACCOUNT+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
             target.write(template.render(resources=resources[item]))
 
 
 def main():
     known_args, unknown_args = parse_arguments().parse_known_args()
-    parse_zone(zone_file=known_args.file)
-    render(known_args)
+    client = boto3.client('route53')
+    hostedzone=client.list_hosted_zones()
+    os.mkdir("./"+ACCOUNT)
+    for zone in hostedzone["HostedZones"]:
+        if not zone["Config"]["PrivateZone"]:
+            rs=client.list_resource_record_sets(HostedZoneId=zone["Id"])
+            os.mkdir("./"+ACCOUNT+"/"+zone["Name"])
+            parse_zone(rs)
+            render(known_args, zone)
 
 
 if __name__ == '__main__':
