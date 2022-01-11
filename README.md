@@ -34,22 +34,16 @@ python3 setup.py install
 ## Usage
 
 * export the aws account 
-AWS_EXPORT=<PROFILE>
-
-Example usage scenario is the next:
-**NOTE TODO** - the script still asking for a file even though we run with out a file. we will fix that. So for now we need to pass a mock file just for the script to run.
+export AWS_PROFILE=<PROFILE_NAME>
 
 ```bash
 terraform-named-cloudflare \
-    --file <NAMED_ZONE_FILE> \
     --zone-id <CLOUDFLARE_ZONE_ID> \
     --zone-name <CLOUDFLARE_ZONE_NAME>
 ```
 
 Where:
 
-- `NAMED_ZONE_FILE` - the absolute or relative path to zone file in Bind9 (named)
-format.
 - `CLOUDFLARE_ZONE_ID` - the optional CloudFlare zone ID (can be found in CloudFlare
 WEB interface).
 - `CLOUDFLARE_ZONE_NAME` - the optional CloudFlare zone name (the same as domain
