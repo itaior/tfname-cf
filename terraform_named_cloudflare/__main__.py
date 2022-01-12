@@ -6,7 +6,7 @@ import re
 import boto3
 import os
 
-ACCOUNTID="9037"
+ACCOUNTID="3716"
 
 resources = {
     'A': {},
@@ -15,7 +15,7 @@ resources = {
     'MX': {},
     'SRV': {},
     'TXT': {},
-    # 'NS': {}
+    'NS': {}
 }
 
 
@@ -164,6 +164,23 @@ def txt(record):
         return True
     return False
 
+def ns(record):
+    # match = re.match(A, record)
+    print(record)
+    match = (record['Type'] == 'NS')
+    if match:
+        resource = fix(record)
+        if resource in resources['NS']:
+            return False    
+        resources['NS'][resource] = {
+            'name': record['Name'],
+            'ttl': record['TTL'],
+            'value1': record['ResourceRecords'][0]['Value'],
+            'value2': record['ResourceRecords'][1]['Value'],
+            'value3': record['ResourceRecords'][2]['Value'],
+            'value4': record['ResourceRecords'][3]['Value'],
+        }
+
 
 def parse_arguments():
     """
@@ -205,6 +222,8 @@ def parse_zone(data):
             continue
         if txt(record=record):
             continue
+        if ns(record=record):
+            continue
         print(record)
 
 
@@ -223,11 +242,17 @@ def main():
     known_args, unknown_args = parse_arguments().parse_known_args()
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
-    os.mkdir("./"+ACCOUNTID)
+    if os.path.exists("./"+ACCOUNTID):
+        pass
+    else:
+        os.mkdir("./"+ACCOUNTID)
     for zone in hostedzone["HostedZones"]:
         if not zone["Config"]["PrivateZone"]:
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"])
-            os.mkdir("./"+ACCOUNTID+"/"+zone["Name"])
+            if os.path.exists("./"+ACCOUNTID+"/"+zone["Name"]):
+                pass
+            else:
+                os.mkdir("./"+ACCOUNTID+"/"+zone["Name"])
             parse_zone(rs)
             render(known_args, zone)
 
