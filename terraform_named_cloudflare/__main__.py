@@ -165,7 +165,7 @@ def txt(record):
     return False
 
 def ns(record):
-    # match = re.match(A, record)
+    # match = re.match(NS, record)
     print(record)
     match = (record['Type'] == 'NS')
     if match:
@@ -189,7 +189,8 @@ def ns(record):
                 'value1': record['ResourceRecords'][0]['Value'],
                 'value2': record['ResourceRecords'][1]['Value']
                 }
-
+        return True
+    return False
 
 def parse_arguments():
     """
@@ -240,7 +241,7 @@ def render(known_args, zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     template = env.get_template('variables.tf.j2')
     with open("./"+ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
-        target.write(template.render(cloudflare_zone_id=known_args.zone_id, cloudflare_zone_name=known_args.zone_name))
+        target.write(template.render(cloudflare_zone_id=known_args.zone_id, cloudflare_zone_name=known_args.zone_name))           
     for item in resources:
         template = env.get_template('{}.tf.j2'.format(item))
         with open("./"+ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
