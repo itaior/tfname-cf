@@ -12,21 +12,11 @@ To make the result code organized, code separated based on DNS records types.
 
 ## Installation
 
-### Production
-
-The simplest way to install the module is to use PIP:
-
-```bash
-pip install terraform-named-cloudflare
-```
-
-### Development
-
-To install the module from sources, just clone the repository and install the
+To install our version of this project, just clone the repository and install the
 module:
 
 ```bash
-git clone https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare.git
+git clone 
 cd terraform-named-cloudflare
 python3 setup.py install
 ```
@@ -37,17 +27,8 @@ python3 setup.py install
 export AWS_PROFILE=<PROFILE_NAME>
 
 ```bash
-terraform-named-cloudflare \
-    --zone-id <CLOUDFLARE_ZONE_ID> \
-    --zone-name <CLOUDFLARE_ZONE_NAME>
+terraform-named-cloudflare
 ```
-
-Where:
-
-- `CLOUDFLARE_ZONE_ID` - the optional CloudFlare zone ID (can be found in CloudFlare
-WEB interface).
-- `CLOUDFLARE_ZONE_NAME` - the optional CloudFlare zone name (the same as domain
-name).
 
 Since not all records need to be converted in Terraform code, the script ignores
 some of them and just prints ignored records to standard output to provide ability
@@ -75,6 +56,7 @@ Currently this module supports the next types of DNS records:
 - MX
 - SRV
 - TXT
+- NS
 
 Other types of DNS records can be added based on the need. Also, contrinutions
 are always welcome.

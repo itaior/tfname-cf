@@ -192,28 +192,28 @@ def ns(record):
         return True
     return False
 
-def parse_arguments():
-    """
-    Function to handle argument parser configuration (argument definitions, default values and so on).
-    :return: :obj:`argparse.ArgumentParser` object with set of configured arguments.
-    :rtype: argparse.ArgumentParser
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-i',
-        '--zone-id',
-        default=str(),
-        help='Optional CloudFlare zone ID',
-        type=str
-    )
-    parser.add_argument(
-        '-n',
-        '--zone-name',
-        default=str(),
-        help='Optional CloudFlare zone name',
-        type=str
-    )
-    return parser
+# def parse_arguments():
+#     """
+#     Function to handle argument parser configuration (argument definitions, default values and so on).
+#     :return: :obj:`argparse.ArgumentParser` object with set of configured arguments.
+#     :rtype: argparse.ArgumentParser
+#     """
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument(
+#         '-i',
+#         '--zone-id',
+#         default=str(),
+#         help='Optional CloudFlare zone ID',
+#         type=str
+#     )
+#     parser.add_argument(
+#         '-n',
+#         '--zone-name',
+#         default=str(),
+#         help='Optional CloudFlare zone name',
+#         type=str
+#     )
+#     return parser
 
 
 def parse_zone(data):
@@ -237,11 +237,14 @@ def parse_zone(data):
         print(record)
 
 
-def render(known_args, zone):
+def render(zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     template = env.get_template('variables.tf.j2')
     with open("./"+ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
-        target.write(template.render(cloudflare_zone_id=known_args.zone_id, cloudflare_zone_name=known_args.zone_name))           
+        target.write(template.render(cloudflare_zone_name=zone["Name"]))
+    template = env.get_template('cloudflareZone.tf.j2')
+    with open("./"+ACCOUNTID+"/"+zone["Name"]+'/cloudflareZone.tf', 'w') as target:
+        target.write(template.render(cloudflare_zone_name=zone["Name"]))            
     for item in resources:
         template = env.get_template('{}.tf.j2'.format(item))
         with open("./"+ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
@@ -249,7 +252,6 @@ def render(known_args, zone):
 
 
 def main():
-    known_args, unknown_args = parse_arguments().parse_known_args()
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
     if os.path.exists("./"+ACCOUNTID):
@@ -264,7 +266,7 @@ def main():
             else:
                 os.mkdir("./"+ACCOUNTID+"/"+zone["Name"])
             parse_zone(rs)
-            render(known_args, zone)
+            render(zone)
 
 
 if __name__ == '__main__':
