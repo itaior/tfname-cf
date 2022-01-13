@@ -16,7 +16,7 @@ To install our version of this project, just clone the repository and install th
 module:
 
 ```bash
-git clone 
+git clone git@github.com:itaior/tfname-cf.git
 cd terraform-named-cloudflare
 python3 setup.py install
 ```
