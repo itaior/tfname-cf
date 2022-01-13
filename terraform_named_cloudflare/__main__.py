@@ -6,7 +6,7 @@ import re
 import boto3
 import os
 
-ACCOUNTID="3716"
+AWS_ACCOUNTID="3716"
 
 resources = {
     'A': {},
@@ -192,30 +192,6 @@ def ns(record):
         return True
     return False
 
-# def parse_arguments():
-#     """
-#     Function to handle argument parser configuration (argument definitions, default values and so on).
-#     :return: :obj:`argparse.ArgumentParser` object with set of configured arguments.
-#     :rtype: argparse.ArgumentParser
-#     """
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument(
-#         '-i',
-#         '--zone-id',
-#         default=str(),
-#         help='Optional CloudFlare zone ID',
-#         type=str
-#     )
-#     parser.add_argument(
-#         '-n',
-#         '--zone-name',
-#         default=str(),
-#         help='Optional CloudFlare zone name',
-#         type=str
-#     )
-#     return parser
-
-
 def parse_zone(data):
     for record in data['ResourceRecordSets']:
         print(record)
@@ -240,31 +216,31 @@ def parse_zone(data):
 def render(zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     template = env.get_template('variables.tf.j2')
-    with open("./"+ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
+    with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
         target.write(template.render(cloudflare_zone_name=zone["Name"]))
     template = env.get_template('cloudflareZone.tf.j2')
-    with open("./"+ACCOUNTID+"/"+zone["Name"]+'/cloudflareZone.tf', 'w') as target:
+    with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/cloudflareZone.tf', 'w') as target:
         target.write(template.render(cloudflare_zone_name=zone["Name"]))            
     for item in resources:
         template = env.get_template('{}.tf.j2'.format(item))
-        with open("./"+ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
+        with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
             target.write(template.render(resources=resources[item]))
 
 
 def main():
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
-    if os.path.exists("./"+ACCOUNTID):
+    if os.path.exists("./"+AWS_ACCOUNTID):
         pass
     else:
-        os.mkdir("./"+ACCOUNTID)
+        os.mkdir("./"+AWS_ACCOUNTID)
     for zone in hostedzone["HostedZones"]:
         if not zone["Config"]["PrivateZone"]:
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"])
-            if os.path.exists("./"+ACCOUNTID+"/"+zone["Name"]):
+            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zone["Name"]):
                 pass
             else:
-                os.mkdir("./"+ACCOUNTID+"/"+zone["Name"])
+                os.mkdir("./"+AWS_ACCOUNTID+"/"+zone["Name"])
             parse_zone(rs)
             render(zone)
 
