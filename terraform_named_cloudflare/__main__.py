@@ -172,6 +172,7 @@ def ns(record):
         resource = fix(record)
         if resource in resources['NS']:
             return False
+        # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
@@ -192,8 +193,8 @@ def ns(record):
         return True
     return False
 
-def parse_zone(data):
-    for record in data['ResourceRecordSets']:
+def parse_zone(rs, zone):
+    for record in rs['ResourceRecordSets']:
         print(record)
         # if not comment(record=record):
         if a(record=record):
@@ -208,10 +209,10 @@ def parse_zone(data):
             continue
         if txt(record=record):
             continue
-        if ns(record=record):
+        # exclude NS records of the zone we work on
+        if record['Name'] != zone["Name"] and ns(record=record):
             continue
         print(record)
-
 
 def render(zone):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
@@ -241,9 +242,11 @@ def main():
                 pass
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zone["Name"])
-            parse_zone(rs)
+            parse_zone(rs, zone)
             render(zone)
-
+            # empty resources dict for new zone
+            for i in resources:
+                resources[i].clear()
 
 if __name__ == '__main__':
     main()
