@@ -53,6 +53,7 @@ def a(record):
         resource = fix(record)
         if resource in resources['A']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -80,6 +81,7 @@ def aaaa(record):
         resource = fix(record)
         if resource in resources['AAAA']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -108,6 +110,7 @@ def cname(record):
         resource = fix(record)
         if resource in resources['CNAME']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -136,6 +139,7 @@ def mx(record):
         resource = fix(record)
         if resource in resources['MX']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -177,6 +181,7 @@ def srv(record):
         resource = fix(match.group(1))
         if resource in resources['SRV']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -204,6 +209,7 @@ def txt(record):
         resource = fix(record)
         if resource in resources['TXT']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -231,6 +237,7 @@ def ns(record):
         resource = fix(record)
         if resource in resources['NS']:
           return False
+          # test and check duplicate records
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
