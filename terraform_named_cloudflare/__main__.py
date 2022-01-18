@@ -53,7 +53,7 @@ def a(record):
     if match:
         resource = fix(record)
         if resource in resources['A']:
-            return False
+          return False
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -108,7 +108,7 @@ def cname(record):
     if match:
         resource = fix(record)
         if resource in resources['CNAME']:
-            return False
+          return False
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
@@ -136,7 +136,7 @@ def mx(record):
     if match:
         resource = fix(record)
         if resource in resources['MX']:
-            return False
+          return False
         if resource in index[record['Type']]:
           index[record['Type']][resource] += 1
         else:
