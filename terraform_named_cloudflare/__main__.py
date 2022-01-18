@@ -5,9 +5,8 @@ import jinja2
 import re
 import boto3
 import os
-import random
 
-AWS_ACCOUNTID="3716"
+AWS_ACCOUNTID=""
 
 index = {
   'A': {},
@@ -58,7 +57,7 @@ def a(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
+        resource = f"{resource}{index[record['Type']][resource]}_"
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
                 'name': record['Name'],
@@ -85,7 +84,7 @@ def aaaa(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
+        resource = f"{resource}{index[record['Type']][resource]}_"      
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': record['Name'],
@@ -113,7 +112,7 @@ def cname(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
+        resource = f"{resource}{index[record['Type']][resource]}_"      
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
                 'name': record['Name'],
@@ -141,7 +140,7 @@ def mx(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
+        resource = f"{resource}{index[record['Type']][resource]}"      
         resources['MX'][resource] = {
             'name': record['Name'],
             'ttl': 1,
@@ -162,7 +161,7 @@ def srv(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
+        resource = f"{resource}{index[record['Type']][resource]}_"
         resources['SRV'][resource] = {
             'data_name': match.group(4),
             'name': match.group(1),
@@ -189,7 +188,7 @@ def txt(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
+        resource = f"{resource}{index[record['Type']][resource]}_"
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -216,7 +215,7 @@ def ns(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
+        resource = f"{resource}{index[record['Type']][resource]}_"
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
