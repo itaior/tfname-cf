@@ -8,6 +8,16 @@ import os
 
 AWS_ACCOUNTID="Tikal"
 
+index = {
+  'A': {},
+  'AAAA': {},
+  'CNAME': {},
+  'MX': {},
+  'SRV': {},
+  'TXT': {},
+  'NS': {}
+}
+
 resources = {
     'A': {},
     'AAAA': {},
@@ -42,7 +52,12 @@ def a(record):
     if match:
         resource = fix(record)
         if resource in resources['A']:
-            return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
                 'name': record['Name'],
@@ -64,7 +79,12 @@ def aaaa(record):
     if match:
         resource = fix(record)
         if resource in resources['AAAA']:
-            return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"      
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': record['Name'],
@@ -87,7 +107,12 @@ def cname(record):
     if match:
         resource = fix(record)
         if resource in resources['CNAME']:
-            return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"      
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
                 'name': record['Name'],
@@ -110,7 +135,12 @@ def mx(record):
     if match:
         resource = fix(record)
         if resource in resources['MX']:
-            return False  
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"      
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
@@ -146,7 +176,12 @@ def srv(record):
     if match:
         resource = fix(match.group(1))
         if resource in resources['SRV']:
-            return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"
         resources['SRV'][resource] = {
             'data_name': match.group(4),
             'name': match.group(1),
@@ -168,7 +203,12 @@ def txt(record):
     if match:
         resource = fix(record)
         if resource in resources['TXT']:
-            return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -190,8 +230,13 @@ def ns(record):
     if match:
         resource = fix(record)
         if resource in resources['NS']:
-            return False
-        # check the number of values in the ns record
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_"
+      # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
@@ -288,6 +333,9 @@ def main():
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
+            # empty resources dict for new zone
+            for i in index:
+                index[i].clear()
 
 if __name__ == '__main__':
     main()
