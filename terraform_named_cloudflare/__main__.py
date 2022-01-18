@@ -53,12 +53,12 @@ def a(record):
     if match:
         resource = fix(record)
         if resource in resources['A']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+            return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
                 'name': record['Name'],
@@ -80,12 +80,12 @@ def aaaa(record):
     if match:
         resource = fix(record)
         if resource in resources['AAAA']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': record['Name'],
@@ -108,12 +108,12 @@ def cname(record):
     if match:
         resource = fix(record)
         if resource in resources['CNAME']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+            return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
                 'name': record['Name'],
@@ -136,12 +136,12 @@ def mx(record):
     if match:
         resource = fix(record)
         if resource in resources['MX']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+            return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"      
         resources['MX'][resource] = {
             'name': record['Name'],
             'ttl': 1,
@@ -157,12 +157,12 @@ def srv(record):
     if match:
         resource = fix(match.group(1))
         if resource in resources['SRV']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
         resources['SRV'][resource] = {
             'data_name': match.group(4),
             'name': match.group(1),
@@ -184,12 +184,12 @@ def txt(record):
     if match:
         resource = fix(record)
         if resource in resources['TXT']:
-            if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
+          return False
+        if resource in index[record['Type']]:
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -210,13 +210,14 @@ def ns(record):
     match = (record['Type'] == 'NS')
     if match:
         resource = fix(record)
+        if resource in resources['NS']:
+          return False
         if resource in index[record['Type']]:
-              index[record['Type']][resource] += 1
-            else:
-              index[record['Type']][resource] = 1
-            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
-            # return False
-        # check the number of values in the ns record
+          index[record['Type']][resource] += 1
+        else:
+          index[record['Type']][resource] = 1
+        resource = f"{resource}{index[record['Type']][resource]}_duplicate"
+      # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
