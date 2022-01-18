@@ -1,11 +1,11 @@
 {%- for resource in resources -%}
 resource "cloudflare_record" "{{ resource }}CNAME" {
-  depends_on = [cloudflare_zone.{{ cloudflare_zone_name }}]
+  depends_on = [cloudflare_zone.{{ resourcename }}]
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "CNAME"
   value      = "{{ resources[resource].value }}"
-  zone_id    = cloudflare_zone.{{ cloudflare_zone_name }}.id
+  zone_id    = cloudflare_zone.{{ resourcename }}.id
 }
 
 {% endfor -%}

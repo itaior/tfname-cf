@@ -6,7 +6,7 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID="6995"
+AWS_ACCOUNTID="Tikal"
 
 resources = {
     'A': {},
@@ -243,15 +243,15 @@ def render(zone, rs, zoneName):
     #     target.write(template.render(cloudflare_zone_name=zoneName))
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
-    cloudflare_zone_name=zone["Name"].replace('.', '_')
+    resourcename=zone["Name"].replace('.', '_')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
-        target.write(template.render(cloudflare_zone_name=cloudflare_zone_name))
+        target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"]))
     # records                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item], cloudflare_zone_name=cloudflare_zone_name))
+                target.write(template.render(resources=resources[item], resourcename=resourcename))
     # countRecords.txt
     recordA=len(resources['A'])
     recordAAAA=len(resources['AAAA'])
