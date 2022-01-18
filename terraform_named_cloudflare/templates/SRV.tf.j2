@@ -1,20 +1,21 @@
 {%- for resource in resources -%}
 resource "cloudflare_record" "{{ resource }}SRV" {
-  name = "{{ resources[resource].name }}"
-  ttl  = {{ resources[resource].ttl }}
-  type = "SRV"
+  depends_on = [cloudflare_zone.{{ resourcename }}]
+  name       = "{{ resources[resource].name }}"
+  ttl        = {{ resources[resource].ttl }}
+  type       = "SRV"
 
   data = {
     service  = "{{ resources[resource].service }}"
     proto    = "{{ resources[resource].proto }}"
-    name     = {% if resources[resource].data_name %}"{{ resources[resource].data_name }}"{% else %}var.cloudflare_zone_name{% endif %}
+    name     = {% if resources[resource].data_name %}"{{ resources[resource].data_name }}"{% else %}var.resourcename{% endif %}
     priority = {{ resources[resource].priority }}
     weight   = {{ resources[resource].weight }}
     port     = {{ resources[resource].port }}
     target   = "{{ resources[resource].target }}"
   }
 
-  zone_id = outputs.zone_id
+  zone_id = cloudflare_zone.{{ resourcename }}.id
 }
 
 {% endfor -%}

@@ -6,7 +6,7 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID=""
+AWS_ACCOUNTID="Tikal"
 
 index = {
   'A': {},
@@ -140,15 +140,35 @@ def mx(record):
           index[record['Type']][resource] += 1
         else:
           index[record['Type']][resource] = 1
-        resource = f"{resource}{index[record['Type']][resource]}"      
-        resources['MX'][resource] = {
-            'name': record['Name'],
-            'ttl': 1,
-            'value': record['ResourceRecords'][0]['Value']
-        }
+        resource = f"{resource}{index[record['Type']][resource]}_"      
+        x = int(len(record['ResourceRecords']))
+        if x == 1:
+            # get priority and value
+            setPV = record['ResourceRecords'][0]['Value'].split()
+
+            resources['MX'][resource] = {
+                'name': record['Name'],
+                'ttl': 1,
+                'priority1': setPV[0],
+                'value1': setPV[1],
+                'priority2': "#TODO",
+                'value2': "#TODO"
+            }
+        elif x == 2:
+            # get priority and value
+            setPV = record['ResourceRecords'][0]['Value'].split()
+            setPV2 = record['ResourceRecords'][1]['Value'].split()  
+
+            resources['MX'][resource] = {
+                'name': record['Name'],
+                'ttl': 1,
+                'priority1': setPV[0],
+                'priority2': setPV2[0],
+                'value1': setPV[1],
+                'value2': setPV2[1]
+                }
         return True
     return False
-
 
 def srv(record):
     # match = re.match(SRV, record)
@@ -232,12 +252,14 @@ def ns(record):
                 'name': record['Name'],
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'],
-                'value2': record['ResourceRecords'][1]['Value']
+                'value2': record['ResourceRecords'][1]['Value'],
+                'value3': "#TODO",
+                'value4': "#TODO"
                 }
         return True
     return False
 
-def parse_zone(rs, zone):
+def parse_zone(zone, rs):
     for record in rs['ResourceRecordSets']:
         print(record)
         # if not comment(record=record):
@@ -258,22 +280,23 @@ def parse_zone(rs, zone):
             continue
         print(record)
 
-def render(zone, rs):
+def render(zone, rs, zoneName):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    # variables.tf
-    template = env.get_template('variables.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/variables.tf', 'w') as target:
-        target.write(template.render(cloudflare_zone_name=zone["Name"]))
+    # # variables.tf
+    # template = env.get_template('variables.tf.j2')
+    # with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/variables.tf', 'w') as target:
+    #     target.write(template.render(cloudflare_zone_name=zoneName))
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/cloudflareZone.tf', 'w') as target:
-        target.write(template.render(cloudflare_zone_name=zone["Name"]))
+    resourcename=zone["Name"].replace('.', '_')
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
+        target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"]))
     # records                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/{}.tf'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item]))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
+                target.write(template.render(resources=resources[item], resourcename=resourcename))
     # countRecords.txt
     recordA=len(resources['A'])
     recordAAAA=len(resources['AAAA'])
@@ -284,7 +307,7 @@ def render(zone, rs):
     recordNS=len(resources['NS'])
     recordsCreated = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
     template = env.get_template('countRecords.txt.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zone["Name"]+'/countRecords.txt', 'w') as target:
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
         target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, recordNS=recordNS, rs=(len(rs['ResourceRecordSets']))))
 
 def main():
@@ -297,16 +320,22 @@ def main():
     for zone in hostedzone["HostedZones"]:
         if not zone["Config"]["PrivateZone"]:
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
-                
-            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zone["Name"]):
+            # set correct name for terraform module
+            zoneName=zone["Name"].replace('.', '-')
+            # silce the last - from the folder name
+            zoneName=zoneName[0:-1]
+            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
                 pass
             else:
-                os.mkdir("./"+AWS_ACCOUNTID+"/"+zone["Name"])
-            parse_zone(rs, zone)
-            render(zone, rs)
+                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName)
+            parse_zone(zone, rs)
+            render(zone, rs, zoneName)
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
+            # empty resources dict for new zone
+            for i in index:
+                index[i].clear()
 
 if __name__ == '__main__':
     main()
