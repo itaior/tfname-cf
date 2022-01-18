@@ -2,7 +2,5 @@ resource "cloudflare_zone" "{{ cloudflare_zone_name }}" {
     zone = "{{ cloudflare_zone_name }}"
 }
 
-output "zone_id" {
-  value = "cloudflare_zone.{{ cloudflare_zone_name }}.id"
-}
+
 
