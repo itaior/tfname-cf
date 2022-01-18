@@ -210,9 +210,11 @@ def ns(record):
     match = (record['Type'] == 'NS')
     if match:
         resource = fix(record)
-        if resource in resources['NS']:
-            index[record['Type'][resource]] += 1
-            resource = f"{resource}_{index[record['Type'][resource]]}"
+        if resource in index[record['Type']]:
+              index[record['Type']][resource] += 1
+            else:
+              index[record['Type']][resource] = 1
+            resource = f"{resource}{index[record['Type']][resource]}_duplicate"
             # return False
         # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
