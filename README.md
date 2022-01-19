@@ -45,7 +45,7 @@ In order to over come those cases we create a summry file that will compare the 
 created and the actual records in the aws route53 zone.
 
 For example:
-׳׳׳
+```
     A                       = "108"
     AAAA                    = "0" 
     CNAME                   = "14" 
@@ -65,7 +65,7 @@ For example:
     SRV                     = "0"
     TXT                     = "4"
     NS                      = "1"
-׳׳׳
+```
 
 In this case we can see that the tool missed one edge case of MX record and there for we should check this case in the our
 aws zone. 
