@@ -40,9 +40,9 @@ modules listed in the [requirements.txt](requirements.txt) and automatically
 installed with module.
 
 ## Limitations
-There some edge cases that might be missed, like MX record with more than 2 values.
-In order to over come those cases we create a summry file that will compare the records
-created and the actual records in the aws route53 zone.
+There are some edge cases that might be missed, like MX record with more than 2 values.
+In order to over come those cases we created a summry file that will compare the records
+that were templated as terraform cloudflare resources and the actual records in the aws route53 zone.
 
 For example:
 ```
