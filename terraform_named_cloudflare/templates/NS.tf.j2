@@ -1,34 +1,34 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "{{ resource }}NS1" {
+resource "cloudflare_record" "NS1_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "NS"
   value      = "{{ resources[resource].value1 }}"
   zone_id    = cloudflare_zone.{{ resourcename }}.id
 }
 
-resource "cloudflare_record" "{{ resource }}NS2" {
+resource "cloudflare_record" "NS2_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "NS"
   value      = "{{ resources[resource].value2 }}"
   zone_id    = cloudflare_zone.{{ resourcename }}.id
 }
 
-resource "cloudflare_record" "{{ resource }}NS3" {
+resource "cloudflare_record" "NS3_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "NS"
   value      = "{{ resources[resource].value3 }}"
   zone_id    = cloudflare_zone.{{ resourcename }}.id
 }
 
-resource "cloudflare_record" "{{ resource }}NS4" {
+resource "cloudflare_record" "NS4_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "NS"
   value      = "{{ resources[resource].value4 }}"

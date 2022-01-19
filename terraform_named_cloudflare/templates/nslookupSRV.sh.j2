@@ -5,5 +5,5 @@ declare -a StringArray=( {%- for resource in resources -%} "{{ resources[resourc
  
 # Read the array values with space
 for val in "${StringArray[@]}"; do
-  nslookup -type=[A] $val andy.ns.cloudflare.com | grep "** server can't find" | awk '{print $5}' > errorSRV.txt 
+  nslookup -type=[SRV] $val {{ cloudflare_ns_record }} | grep "** server can't find" | awk '{print $5}' > errorSRV.txt 
 done

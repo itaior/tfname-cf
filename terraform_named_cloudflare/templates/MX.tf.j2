@@ -1,7 +1,7 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "{{ resource }}MX1" {
+resource "cloudflare_record" "MX1_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "MX"
   priority   = "{{ resources[resource].priority1 }}"
@@ -9,9 +9,9 @@ resource "cloudflare_record" "{{ resource }}MX1" {
   zone_id    = cloudflare_zone.{{ resourcename }}.id
 }
 
-resource "cloudflare_record" "{{ resource }}MX2" {
+resource "cloudflare_record" "MX2_{{ resourcename }}" {
   depends_on = [cloudflare_zone.{{ resourcename }}]
-  name       = "{{ resources[resource].name }}"
+  name       = "{{ recordName }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "MX"
   priority   = "{{ resources[resource].priority2 }}"

@@ -240,6 +240,14 @@ def parse_arguments():
         required=True,
         type=str
     )
+    parser.add_argument(
+        '-ns',
+        '--ns_record',
+        help='cloudlfare ns record, required for nslookup testing. Example Record: "guy.ns.cloudflare.com"',
+        default=str(),
+        required=True,
+        type=str
+    )
     return parser
 
 def parse_zone(zone, rs):
@@ -263,7 +271,7 @@ def parse_zone(zone, rs):
             continue
         print(record)
 
-def render(zone, rs, zoneName, account_id):
+def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     # # variables.tf
     # template = env.get_template('variables.tf.j2')
@@ -280,21 +288,22 @@ def render(zone, rs, zoneName, account_id):
     resourcename=zone["Name"].replace('.', '_')
     resourcename=resourcename[0:-1]
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
-        target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"]))
+        target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"][0:-1]))
 
     # nslookup                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item]))
+                target.write(template.render(resources=resources[item], cloudflare_ns_record=cloudflare_ns_record))
 
     # records                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item], resourcename=resourcename))
+                target.write(template.render(resources=resources[item], resourcename=resourcename, 
+                recordName=resourcename.replace('_', '.')))
 
     # countRecords.txt
     recordA=len(resources['A'])
@@ -305,13 +314,41 @@ def render(zone, rs, zoneName, account_id):
     recordTXT=len(resources['TXT'])
     recordNS=len(resources['NS'])
     recordsCreated = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
+    awsArecord      = 0
+    awsAAAArecord   = 0
+    awsMXrecord     = 0
+    awsTXTrecord    = 0
+    awsCNAMErecord  = 0
+    awsSRVrecord    = 0
+    awsNSrecord     = 0
+    for i in rs['ResourceRecordSets']:
+        if i['Type'] == 'A':
+            awsArecord += 1
+        elif i['Type'] == 'NS':
+            awsNSrecord += 1
+        elif i['Type'] == 'AAAA':
+            awsAAAArecord += 1
+        elif i['Type'] == 'MX':
+            awsMXrecord += 1
+        elif i['Type'] == 'TXT':
+            awsTXTrecord += 1
+        elif i['Type'] == 'CNAME':
+            awsCNAMErecord += 1
+        elif i['Type'] == 'SRV':
+            awsSRVrecord += 1
+
     template = env.get_template('countRecords.txt.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
-        target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, recordNS=recordNS, rs=(len(rs['ResourceRecordSets']))))
+        target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,
+        recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, 
+        recordNS=recordNS, awsArecord=awsArecord, awsAAAArecord=awsAAAArecord, awsMXrecord=awsMXrecord, 
+        awsTXTrecord=awsTXTrecord, awsCNAMErecord=awsCNAMErecord, awsSRVrecord=awsSRVrecord, awsNSrecord=awsNSrecord,
+        rs=(len(rs['ResourceRecordSets']))))
 
 def main():
     args = parse_arguments().parse_args()
     account_id = args.account_id
+    cloudflare_ns_record = args.ns_record
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
     if os.path.exists("./"+AWS_ACCOUNTID):
@@ -334,11 +371,11 @@ def main():
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/error")
             parse_zone(zone, rs)
-            render(zone, rs, zoneName, account_id)
+            render(zone, rs, zoneName, account_id, cloudflare_ns_record)
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
-            # empty resources dict for new zone
+            # empty index dict for new zone
             for i in index:
                 index[i].clear()
 
