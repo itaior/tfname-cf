@@ -23,7 +23,10 @@ python3 setup.py install
 ## Usage
 
 * export the aws account 
+```
 export AWS_PROFILE=<PROFILE_NAME>
+```
+* cli command to run the tool
 
 ```bash
 terraform-named-cloudflare -id <CLOUDFLARE_ACCOUNT_ID> -ns <CLOUDFLARE_NS_RECORDS>
