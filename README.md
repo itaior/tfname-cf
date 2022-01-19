@@ -1,11 +1,13 @@
-# This project was originaly forked from https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare
+# This project was originaly forked from 
+https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare
 
 # terraform-named-cloudflare
 
 Our Python tool easily gets all the route53 zones and recods of spesific aws account 
 and parse them into Terraform cloudflare resources(zone, records).
 
-In addition we the tool will create a tests to validate the records using nslookup.
+In addition the tool will create tests to validate the new records in cloudflare 
+using nslookup.
 
 To make the result code organized, code separated based on DNS records types.
 
