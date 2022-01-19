@@ -2,10 +2,10 @@
 
 # terraform-named-cloudflare
 
-Python tool to easily get all the aws route53 zones under your account into Terraform
-CloudFlare provider records definitions.
+Our Python tool easily gets all the route53 zones and recods of spesific aws account 
+and parse them into Terraform cloudflare resources(zone, records).
 
-This module parses each aws route53 zone and generates Terraform resources as Cloudflare terrafrom records.
+In addition we the tool will create a tests to validate the records using nslookup.
 
 To make the result code organized, code separated based on DNS records types.
 
@@ -41,8 +41,8 @@ installed with module.
 
 ## Limitations
 There are some edge cases that might be missed, like MX record with more than 2 values.
-In order to over come those cases we created a summry file that will compare the records
-that were templated as terraform cloudflare resources and the actual records in the aws route53 zone.
+In order to over come those cases we created a summry file, named 'countRecords.txt', that will compare the records
+that were templated as terraform cloudflare resources with the actual records in the aws route53 zone.
 
 For example:
 ```
