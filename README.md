@@ -27,7 +27,7 @@ python3 setup.py install
 export AWS_PROFILE=<PROFILE_NAME>
 
 ```bash
-terraform-named-cloudflare
+terraform-named-cloudflare -id <CLOUDFLARE_ACCOUNT_ID>
 ```
 
 Since not all records need to be converted in Terraform code, the script ignores

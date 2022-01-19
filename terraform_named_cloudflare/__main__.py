@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+from threading import activeCount
 import jinja2
 import re
 import boto3
 import os
 
-AWS_ACCOUNTID="Tikal"
+AWS_ACCOUNTID="6995"
 
 index = {
   'A': {},
@@ -52,7 +53,7 @@ def a(record):
     if match:
         resource = fix(record)
         if resource in resources['A']:
-          return False
+            return False
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
                 'name': record['Name'],
@@ -74,7 +75,7 @@ def aaaa(record):
     if match:
         resource = fix(record)
         if resource in resources['AAAA']:
-          return False
+            return False
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': record['Name'],
@@ -97,7 +98,7 @@ def cname(record):
     if match:
         resource = fix(record)
         if resource in resources['CNAME']:
-          return False     
+            return False     
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
                 'name': record['Name'],
@@ -120,7 +121,7 @@ def mx(record):
     if match:
         resource = fix(record)
         if resource in resources['MX']:
-          return False   
+            return False  
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
@@ -156,7 +157,7 @@ def srv(record):
     if match:
         resource = fix(match.group(1))
         if resource in resources['SRV']:
-          return False
+            return False
         resources['SRV'][resource] = {
             'data_name': match.group(4),
             'name': match.group(1),
@@ -178,7 +179,7 @@ def txt(record):
     if match:
         resource = fix(record)
         if resource in resources['TXT']:
-          return False
+            return False
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -200,7 +201,7 @@ def ns(record):
     if match:
         resource = fix(record)
         if resource in resources['NS']:
-          return False
+            return False
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
@@ -224,6 +225,23 @@ def ns(record):
         return True
     return False
 
+def parse_arguments():
+    """
+    Function to handle argument parser configuration (argument definitions, default values and so on).
+    :return: :obj:`argparse.ArgumentParser` object with set of configured arguments.
+    :rtype: argparse.ArgumentParser
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-id',
+        '--account_id',
+        help='cloudlfare account id',
+        default=str(),
+        required=True,
+        type=str
+    )
+    return parser
+
 def parse_zone(zone, rs):
     for record in rs['ResourceRecordSets']:
         print(record)
@@ -245,23 +263,39 @@ def parse_zone(zone, rs):
             continue
         print(record)
 
-def render(zone, rs, zoneName):
+def render(zone, rs, zoneName, account_id):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     # # variables.tf
     # template = env.get_template('variables.tf.j2')
     # with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/variables.tf', 'w') as target:
     #     target.write(template.render(cloudflare_zone_name=zoneName))
+
+    # main.tf
+    template = env.get_template('main.tf.j2')
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
+        target.write(template.render(account_id=account_id))
+
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
     resourcename=zone["Name"].replace('.', '_')
+    resourcename=resourcename[0:-1]
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
         target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"]))
+
+    # nslookup                
+    for item in resources:
+        if not len(resources[item]) == 0:
+            template = env.get_template('nslookup{}.sh.j2'.format(item))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'w') as target:
+                target.write(template.render(resources=resources[item]))
+
     # records                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
                 target.write(template.render(resources=resources[item], resourcename=resourcename))
+
     # countRecords.txt
     recordA=len(resources['A'])
     recordAAAA=len(resources['AAAA'])
@@ -276,6 +310,8 @@ def render(zone, rs, zoneName):
         target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, recordNS=recordNS, rs=(len(rs['ResourceRecordSets']))))
 
 def main():
+    args = parse_arguments().parse_args()
+    account_id = args.account_id
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
     if os.path.exists("./"+AWS_ACCOUNTID):
@@ -293,8 +329,12 @@ def main():
                 pass
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName)
+            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName+"/error"):
+                pass
+            else:
+                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/error")
             parse_zone(zone, rs)
-            render(zone, rs, zoneName)
+            render(zone, rs, zoneName, account_id)
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
