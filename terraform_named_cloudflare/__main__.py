@@ -277,7 +277,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     template = env.get_template('cloudflareZone.tf.j2')
     terrafromResource=zone["Name"].replace('.', '_')
     terrafromResource=terrafromResource[0:-1]
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
 
     # nslookup                
@@ -291,7 +291,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/'+zoneName+'.tf'.format(item), 'a') as target:
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
                 target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
     # countRecords.txt
