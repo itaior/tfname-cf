@@ -9,16 +9,6 @@ import os
 
 AWS_ACCOUNTID="6995"
 
-index = {
-  'A': {},
-  'AAAA': {},
-  'CNAME': {},
-  'MX': {},
-  'SRV': {},
-  'TXT': {},
-  'NS': {}
-}
-
 resources = {
     'A': {},
     'AAAA': {},
@@ -56,13 +46,13 @@ def a(record):
             return False
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }
         elif 'AliasTarget' in record:
             resources['A'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }   
@@ -78,13 +68,13 @@ def aaaa(record):
             return False
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }
         elif 'AliasTarget' in record:
             resources['AAAA'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }  
@@ -101,13 +91,13 @@ def cname(record):
             return False     
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }  
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }   
@@ -128,7 +118,7 @@ def mx(record):
             setPV = record['ResourceRecords'][0]['Value'].split()
 
             resources['MX'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'priority1': setPV[0],
                 'value1': setPV[1],
@@ -141,7 +131,7 @@ def mx(record):
             setPV2 = record['ResourceRecords'][1]['Value'].split()  
 
             resources['MX'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'priority1': setPV[0],
                 'priority2': setPV2[0],
@@ -187,7 +177,7 @@ def txt(record):
         if not value:
             return True
         resources['TXT'][resource] = {
-            'name': record['Name'],
+            'name': record['Name'][0:-1],
             'ttl': 1,
             'value': value
         }
@@ -206,7 +196,7 @@ def ns(record):
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'],
                 'value2': record['ResourceRecords'][1]['Value'],
@@ -215,7 +205,7 @@ def ns(record):
                 }
         elif x == 2:           
             resources['NS'][resource] = {
-                'name': record['Name'],
+                'name': record['Name'][0:-1],
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'],
                 'value2': record['ResourceRecords'][1]['Value'],
@@ -285,10 +275,10 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
-    resourcename=zone["Name"].replace('.', '_')
-    resourcename=resourcename[0:-1]
+    terrafromResource=zone["Name"].replace('.', '_')
+    terrafromResource=terrafromResource[0:-1]
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
-        target.write(template.render(resourcename=resourcename, cloudflare_zone_name=zone["Name"][0:-1]))
+        target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
 
     # nslookup                
     for item in resources:
@@ -302,18 +292,17 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item], resourcename=resourcename, 
-                recordName=resourcename.replace('_', '.')))
+                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
     # countRecords.txt
-    recordA=len(resources['A'])
-    recordAAAA=len(resources['AAAA'])
-    recordCANME=len(resources['CNAME'])
-    recordMX=len(resources['MX'])
-    recordSRV=len(resources['SRV'])
-    recordTXT=len(resources['TXT'])
-    recordNS=len(resources['NS'])
-    recordsCreated = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
+    recordA         = len(resources['A'])
+    recordAAAA      = len(resources['AAAA'])
+    recordCANME     = len(resources['CNAME'])
+    recordMX        = len(resources['MX'])
+    recordSRV       = len(resources['SRV'])
+    recordTXT       = len(resources['TXT'])
+    recordNS        = len(resources['NS'])
+    recordsCreated  = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
     awsArecord      = 0
     awsAAAArecord   = 0
     awsMXrecord     = 0
@@ -359,7 +348,7 @@ def main():
         if not zone["Config"]["PrivateZone"]:
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
             # set correct name for terraform module
-            zoneName=zone["Name"].replace('.', '-')
+            zoneName=zone["Name"].replace('.', '_')
             # silce the last - from the folder name
             zoneName=zoneName[0:-1]
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
@@ -375,9 +364,7 @@ def main():
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
-            # empty index dict for new zone
-            for i in index:
-                index[i].clear()
+
 
 if __name__ == '__main__':
     main()
