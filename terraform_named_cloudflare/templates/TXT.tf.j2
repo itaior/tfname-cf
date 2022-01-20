@@ -1,6 +1,5 @@
 {%- for resource in resources -%}
 resource "cloudflare_record" "TXT_{{ resource[0:-1] }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
   name       = "{{ resource  }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "TXT"

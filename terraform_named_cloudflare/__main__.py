@@ -271,7 +271,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     # main.tf
     template = env.get_template('main.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
-        target.write(template.render(account_id=account_id))
+        target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
@@ -333,6 +333,14 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         recordNS=recordNS, awsArecord=awsArecord, awsAAAArecord=awsAAAArecord, awsMXrecord=awsMXrecord, 
         awsTXTrecord=awsTXTrecord, awsCNAMErecord=awsCNAMErecord, awsSRVrecord=awsSRVrecord, awsNSrecord=awsNSrecord,
         rs=(len(rs['ResourceRecordSets']))))
+    
+    # 0 subzones
+    if recordNS == 0 and len(zoneName.split('_')) == 2:
+        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_noSubZones.txt', 'a') as target:
+            target.write(zoneName.replace('_', '.') + "\n")
+    else:
+        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
+            target.write(zoneName.replace('_', '.') + "\n")
 
 def main():
     args = parse_arguments().parse_args()

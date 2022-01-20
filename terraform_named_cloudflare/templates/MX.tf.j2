@@ -1,6 +1,5 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "MX1_{{ resource[0:-1]  }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
+resource "cloudflare_record" "MX_{{ resource[0:-1]  }}_1" {
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "MX"
@@ -9,8 +8,7 @@ resource "cloudflare_record" "MX1_{{ resource[0:-1]  }}" {
   zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "MX2_{{ resource[0:-1] }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
+resource "cloudflare_record" "MX_{{ resource[0:-1] }}_1" {
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
   type       = "MX"

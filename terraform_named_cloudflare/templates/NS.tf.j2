@@ -1,5 +1,5 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "NS1_{{ resource[0:-1]  }}" {
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_1" {
   depends_on = [cloudflare_zone.{{ terrafromResource  }}]
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
@@ -8,7 +8,7 @@ resource "cloudflare_record" "NS1_{{ resource[0:-1]  }}" {
   zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS2_{{ resource[0:-1]  }}" {
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_2" {
   depends_on = [cloudflare_zone.{{ terrafromResource  }}]
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
@@ -17,7 +17,7 @@ resource "cloudflare_record" "NS2_{{ resource[0:-1]  }}" {
   zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS3_{{ resource[0:-1]  }}" {
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_3" {
   depends_on = [cloudflare_zone.{{ terrafromResource  }}]
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
@@ -26,7 +26,7 @@ resource "cloudflare_record" "NS3_{{ resource[0:-1]  }}" {
   zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS4_{{ resource[0:-1]  }}" {
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_4" {
   depends_on = [cloudflare_zone.{{ terrafromResource  }}]
   name       = "{{ resources[resource].name }}"
   ttl        = {{ resources[resource].ttl }}
