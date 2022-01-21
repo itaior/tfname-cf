@@ -10,6 +10,7 @@ In addition the tool will create tests to validate the new records in cloudflare
 using nslookup.
 
 To make the result code organized, code separated based on DNS records types.
+If you would prefer to use one file for all of your records swith branch to oneTF
 
 ## Installation
 
