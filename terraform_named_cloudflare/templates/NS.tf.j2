@@ -1,37 +1,34 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "NS1_{{ resource[0:-1]  }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
-  name       = "{{ resources[resource].name }}"
-  ttl        = {{ resources[resource].ttl }}
-  type       = "NS"
-  value      = "{{ resources[resource].value1 }}"
-  zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_1" {
+  name    = "{{ resources[resource].name }}"
+  ttl     = "{{ resources[resource].ttl }}"
+  type    = "NS"
+  value   = "{{ resources[resource].value1 }}"
+  zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS2_{{ resource[0:-1]  }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
-  name       = "{{ resources[resource].name }}"
-  ttl        = {{ resources[resource].ttl }}
-  type       = "NS"
-  value      = "{{ resources[resource].value2 }}"
-  zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_2" {
+  name    = "{{ resources[resource].name }}"
+  ttl     = "{{ resources[resource].ttl }}"
+  type    = "NS"
+  value   = "{{ resources[resource].value2 }}"
+  zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS3_{{ resource[0:-1]  }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
-  name       = "{{ resources[resource].name }}"
-  ttl        = {{ resources[resource].ttl }}
-  type       = "NS"
-  value      = "{{ resources[resource].value3 }}"
-  zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_3" {
+  name    = "{{ resources[resource].name }}"
+  ttl     = "{{ resources[resource].ttl }}"
+  type    = "NS"
+  value   = "{{ resources[resource].value3 }}"
+  zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS4_{{ resource[0:-1]  }}" {
-  depends_on = [cloudflare_zone.{{ terrafromResource  }}]
-  name       = "{{ resources[resource].name }}"
-  ttl        = {{ resources[resource].ttl }}
-  type       = "NS"
-  value      = "{{ resources[resource].value4 }}"
-  zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
-}
-{% endfor -%}
+resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_4" {
+  name    = "{{ resources[resource].name }}"
+  ttl     = "{{ resources[resource].ttl }}"
+  type    = "NS"
+  value   = "{{ resources[resource].value4 }}"
+  zone_id = cloudflare_zone.{{ terrafromResource  }}.id
+  }
+
+  {% endfor -%}

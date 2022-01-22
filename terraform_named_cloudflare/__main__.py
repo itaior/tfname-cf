@@ -271,13 +271,13 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     # main.tf
     template = env.get_template('main.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
-        target.write(template.render(account_id=account_id))
+        target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
     terrafromResource=zone["Name"].replace('.', '_')
     terrafromResource=terrafromResource[0:-1]
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/cloudflareZone.tf', 'w') as target:
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
 
     # nslookup                
@@ -291,7 +291,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w') as target:
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf', 'a') as target:
                 target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
     # countRecords.txt
@@ -334,6 +334,14 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         awsTXTrecord=awsTXTrecord, awsCNAMErecord=awsCNAMErecord, awsSRVrecord=awsSRVrecord, awsNSrecord=awsNSrecord,
         rs=(len(rs['ResourceRecordSets']))))
 
+    # 0 subzones
+    if recordNS == 0 and len(zoneName.split('_')) == 2:
+        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_noSubZones.txt', 'a') as target:
+            target.write(zoneName.replace('_', '.') + "\n")
+    else:
+        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
+            target.write(zoneName.replace('_', '.') + "\n")
+
 def main():
     args = parse_arguments().parse_args()
     account_id = args.account_id
@@ -349,7 +357,7 @@ def main():
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
             # set correct name for terraform module
             zoneName=zone["Name"].replace('.', '_')
-            # silce the last - from the folder name
+            # silce the last '_' from the folder name
             zoneName=zoneName[0:-1]
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
                 pass
@@ -361,6 +369,8 @@ def main():
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/error")
             parse_zone(zone, rs)
             render(zone, rs, zoneName, account_id, cloudflare_ns_record)
+            # terraform fmt check
+            os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+' && terraform fmt && cd -')
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
