@@ -357,7 +357,7 @@ def main():
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
             # set correct name for terraform module
             zoneName=zone["Name"].replace('.', '_')
-            # silce the last - from the folder name
+            # silce the last '_' from the folder name
             zoneName=zoneName[0:-1]
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
                 pass
@@ -369,6 +369,8 @@ def main():
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/error")
             parse_zone(zone, rs)
             render(zone, rs, zoneName, account_id, cloudflare_ns_record)
+            # terraform fmt check
+            os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+' && terraform fmt && cd -')
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()

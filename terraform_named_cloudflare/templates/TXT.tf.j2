@@ -1,7 +1,7 @@
 {%- for resource in resources -%}
 resource "cloudflare_record" "TXT_{{ resource[0:-1] }}" {
   name       = "{{ resources[resource].name }}"
-  ttl        = {{ resources[resource].ttl }}
+  ttl        = "{{ resources[resource].ttl }}"
   type       = "TXT"
   value      = "{{ resources[resource].value }}"
   zone_id    = cloudflare_zone.{{ terrafromResource  }}.id
