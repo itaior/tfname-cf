@@ -291,7 +291,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf', 'a') as target:
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/{}.tf'.format(item), 'w')  as target:
                 target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
     # countRecords.txt
