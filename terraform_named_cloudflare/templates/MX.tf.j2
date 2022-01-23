@@ -8,7 +8,7 @@ resource "cloudflare_record" "MX_{{ resource[0:-1]  }}_1" {
   zone_id  = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "MX_{{ resource[0:-1] }}_1" {
+resource "cloudflare_record" "MX_{{ resource[0:-1] }}_2" {
   name     = "{{ resources[resource].name }}"
   ttl      = {{ resources[resource].ttl }}
   type     = "MX"
