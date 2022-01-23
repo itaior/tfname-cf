@@ -31,8 +31,8 @@ def fix(name):
     name = name['Name'].replace('.', '_')
     if re.match(pattern=r'^\d', string=name):
         name = '_{}'.format(name)
-    if name.startswith('*'):
-        name = name.replace('*', 'star')
+    if name.startswith('\\052'):
+        name = name.replace('\\052', 'star')
     return name
 
 
@@ -46,13 +46,13 @@ def a(record):
             return False
         if 'ResourceRecords' in  record:      
             resources['A'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }
         elif 'AliasTarget' in record:
             resources['A'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName']
             }   
@@ -68,7 +68,7 @@ def aaaa(record):
             return False
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }
@@ -91,7 +91,7 @@ def cname(record):
             return False     
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }  
@@ -122,8 +122,8 @@ def mx(record):
                 'ttl': 1,
                 'priority1': setPV[0],
                 'value1': setPV[1],
-                'priority2': "#TODO",
-                'value2': "#TODO"
+                'priority2': "##TODO",
+                'value2': "##TODO"
             }
         elif x == 2:
             # get priority and value
@@ -209,8 +209,8 @@ def ns(record):
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'],
                 'value2': record['ResourceRecords'][1]['Value'],
-                'value3': "#TODO",
-                'value4': "#TODO"
+                'value3': "##TODO",
+                'value4': "##TODO"
                 }
         return True
     return False
