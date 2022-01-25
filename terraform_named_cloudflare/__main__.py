@@ -36,7 +36,7 @@ def fix(name):
     return name
 
 
-def a(zone ,record ):
+def a(record ):
     # match = re.match(A, record)
     print(record)
     match = (record['Type'] == 'A')
@@ -44,25 +44,25 @@ def a(zone ,record ):
         resource = fix(record)
         if resource in resources['A']:
             return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
         if 'ResourceRecords' in  record:
-
-            # example of how to solve the naming issue for the records
-            recordName = record['Name'][0:-1].replace('\\052', '*')
-            # if 2 means that it must be the parrent zone so we dont need any change
-            if len(record['Name']) == 2:
-                pass
-            # if 3 means only one sub zone we only need the first name
-            elif len(record['Name']) == 3:
-                recordName = recordName.split(".")[0]
-            # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
-            # the name of the record will be test.tikal -> we will strip the last 2 names
-            else:
-                subDomainRecordName = ""
-                for i in range(0, len(recordName.split("."))-2):
-                    subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
-                # set records name after the loop
-                recordName = subDomainRecordName
-
             resources['A'][resource] = {
                 'name': recordName,
                 'ttl': 1,
@@ -70,7 +70,7 @@ def a(zone ,record ):
             }
         elif 'AliasTarget' in record:
             resources['A'][resource] = {
-                'name': record['Name'][0:-1].replace('\\052', '*'),
+                'name': recordName,
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName'][0:-1]
             }   
@@ -84,15 +84,33 @@ def aaaa(record):
         resource = fix(record)
         if resource in resources['AAAA']:
             return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
-                'name': record['Name'][0:-1].replace('\\052', '*'),
+                'name': recordName,
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value']
             }
         elif 'AliasTarget' in record:
             resources['AAAA'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName'][0:-1]
             }  
@@ -106,16 +124,34 @@ def cname(record):
     if match:
         resource = fix(record)
         if resource in resources['CNAME']:
-            return False     
+            return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
-                'name': record['Name'][0:-1].replace('\\052', '*'),
+                'name': recordName,
                 'ttl': 1,
                 'value': record['ResourceRecords'][0]['Value'][0:-1]
             }  
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': "##TODO",
                 'value': record['AliasTarget']['DNSName'][0:-1]
             }   
@@ -129,14 +165,32 @@ def mx(record):
     if match:
         resource = fix(record)
         if resource in resources['MX']:
-            return False  
+            return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
 
             resources['MX'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': 1,
                 'priority1': setPV[0],
                 'value1': setPV[1],
@@ -149,7 +203,7 @@ def mx(record):
             setPV2 = record['ResourceRecords'][1]['Value'].split()  
 
             resources['MX'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': 1,
                 'priority1': setPV[0],
                 'priority2': setPV2[0],
@@ -188,6 +242,24 @@ def txt(record):
         resource = fix(record)
         if resource in resources['TXT']:
             return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -195,7 +267,7 @@ def txt(record):
         if not value:
             return True
         resources['TXT'][resource] = {
-            'name': record['Name'][0:-1],
+            'name': recordName,
             'ttl': 1,
             'value': value
         }
@@ -210,6 +282,24 @@ def ns(record):
         resource = fix(record)
         if resource in resources['NS']:
             return False
+
+        # example of how to solve the naming issue for the records
+        recordName = record['Name'][0:-1].replace('\\052', '*')
+        # if 2 means that it must be the parrent zone so we dont need any change
+        if len(record['Name']) == 2:
+            pass
+        # if 3 means only one sub zone we only need the first name
+        elif len(record['Name']) == 3:
+            recordName = recordName.split(".")[0]
+        # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+        # the name of the record will be test.tikal -> we will strip the last 2 names
+        else:
+            subDomainRecordName = ""
+            for i in range(0, len(recordName.split("."))-2):
+                subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+            # set records name after the loop
+            recordName = subDomainRecordName
+
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
@@ -262,7 +352,7 @@ def parse_zone(zone, rs):
     for record in rs['ResourceRecordSets']:
         print(record)
         # if not comment(record=record):
-        if a(zone, record=record):
+        if a(record=record):
             continue
         if aaaa(record=record):
             continue
