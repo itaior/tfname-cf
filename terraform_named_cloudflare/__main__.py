@@ -36,7 +36,7 @@ def fix(name):
     return name
 
 
-def a(record ):
+def a(record):
     # match = re.match(A, record)
     print(record)
     match = (record['Type'] == 'A')
