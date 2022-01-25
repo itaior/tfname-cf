@@ -36,7 +36,10 @@ def fix(name):
     return name
 
 def fixRecordName(name):
-    recordName = name[0:-1].replace('\\052', '*')
+    if name.startswith('\\052'):
+        recordName = name[0:-1].replace('\\052', '*')
+    else:
+        recordName = name[0:-1]
     # if 2 means that it must be the parrent zone so we dont need any change
     if len(name[0:-1].split('.')) == 2:
         pass
