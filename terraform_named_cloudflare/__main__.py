@@ -304,7 +304,7 @@ def ns(record):
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'][0:-1],
                 'value2': record['ResourceRecords'][1]['Value'][0:-1],
@@ -313,7 +313,7 @@ def ns(record):
                 }
         elif x == 2:           
             resources['NS'][resource] = {
-                'name': record['Name'][0:-1],
+                'name': recordName,
                 'ttl': 1,
                 'value1': record['ResourceRecords'][0]['Value'][0:-1],
                 'value2': record['ResourceRecords'][1]['Value'][0:-1],
