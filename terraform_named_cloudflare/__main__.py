@@ -54,7 +54,7 @@ def a(record):
             resources['A'][resource] = {
                 'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName']
+                'value': record['AliasTarget']['DNSName'][0:-1]
             }   
         return True
     return False
@@ -76,7 +76,7 @@ def aaaa(record):
             resources['AAAA'][resource] = {
                 'name': record['Name'][0:-1],
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName']
+                'value': record['AliasTarget']['DNSName'][0:-1]
             }  
         return True
     return False
@@ -93,13 +93,13 @@ def cname(record):
             resources['CNAME'][resource] = {
                 'name': record['Name'][0:-1].replace('\\052', '*'),
                 'ttl': 1,
-                'value': record['ResourceRecords'][0]['Value']
+                'value': record['ResourceRecords'][0]['Value'][0:-1]
             }  
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
                 'name': record['Name'][0:-1],
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName']
+                'value': record['AliasTarget']['DNSName'][0:-1]
             }   
         return True
     return False
@@ -198,17 +198,17 @@ def ns(record):
             resources['NS'][resource] = {
                 'name': record['Name'][0:-1],
                 'ttl': 1,
-                'value1': record['ResourceRecords'][0]['Value'],
-                'value2': record['ResourceRecords'][1]['Value'],
-                'value3': record['ResourceRecords'][2]['Value'],
-                'value4': record['ResourceRecords'][3]['Value']
+                'value1': record['ResourceRecords'][0]['Value'][0:-1],
+                'value2': record['ResourceRecords'][1]['Value'][0:-1],
+                'value3': record['ResourceRecords'][2]['Value'][0:-1],
+                'value4': record['ResourceRecords'][3]['Value'][0:-1]
                 }
         elif x == 2:           
             resources['NS'][resource] = {
                 'name': record['Name'][0:-1],
                 'ttl': 1,
-                'value1': record['ResourceRecords'][0]['Value'],
-                'value2': record['ResourceRecords'][1]['Value'],
+                'value1': record['ResourceRecords'][0]['Value'][0:-1],
+                'value2': record['ResourceRecords'][1]['Value'][0:-1],
                 'value3': "##TODO",
                 'value4': "##TODO"
                 }
