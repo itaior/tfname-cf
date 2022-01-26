@@ -37,14 +37,14 @@ def fix(name):
 
 def fixRecordName(name):
     if name.startswith('\\052'):
-        recordName = name[0:-1].replace('\\052', '*')
+        recordName = name.replace('\\052', '*')
     else:
-        recordName = name[0:-1]
+        recordName = name
     # if 2 means that it must be the parrent zone so we dont need any change
-    if len(name[0:-1].split('.')) == 2:
+    if len(name.split('.')) == 2:
         pass
     # if 3 means only one sub zone we only need the first name
-    elif len(name[0:-1].split('.')) == 3:
+    elif len(name.split('.')) == 3:
         recordName = recordName.split(".")[0]
     # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
     # the name of the record will be test.tikal -> we will strip the last 2 names
@@ -64,7 +64,7 @@ def a(record):
         resource = fix(record)
         if resource in resources['A']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
         if 'ResourceRecords' in  record:
             resources['A'][resource] = {
                 'name': recordName,
@@ -87,7 +87,7 @@ def aaaa(record):
         resource = fix(record)
         if resource in resources['AAAA']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': recordName,
@@ -111,7 +111,7 @@ def cname(record):
         resource = fix(record)
         if resource in resources['CNAME']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
         if 'ResourceRecords' in  record:      
             resources['CNAME'][resource] = {
                 'name': recordName,
@@ -135,7 +135,7 @@ def mx(record):
         resource = fix(record)
         if resource in resources['MX']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
@@ -194,7 +194,7 @@ def txt(record):
         resource = fix(record)
         if resource in resources['TXT']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -217,7 +217,7 @@ def ns(record):
         resource = fix(record)
         if resource in resources['NS']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = fixRecordName(record['Name'][0:-1])
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
@@ -301,13 +301,13 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
     # cloudflareZone.tf
     template = env.get_template('cloudflareZone.tf.j2')
-    terrafromResource=zone["Name"].replace('.', '_')
-    terrafromResource=terrafromResource[0:-1]
+    terrafromResource=zone["Name"][0:-1].replace('.', '_')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
 
     # nslookup                
     for item in resources:
+        # create file only for the necessary records
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'w') as target:
