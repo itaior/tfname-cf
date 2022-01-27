@@ -307,18 +307,14 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
     # nslookup                
     for item in resources:
+        # remove zone name from dictinary
+        if  resources[item].get(zone['Name'].replace('.', '_')):
+            resources[item].pop(zone['Name'].replace('.', '_'))
         # create file only for the necessary records
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'w') as target:
-                target.write(template.render(resources=resources[item], cloudflare_ns_record=cloudflare_ns_record))
-
-    # records                
-    for item in resources:
-        if not len(resources[item]) == 0:
-            template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'a') as target:
+                target.write(template.render(resources=resources[item], parentZone=zone['Name'][0:-1], cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
     # countRecords.txt
     recordA         = len(resources['A'])
@@ -367,6 +363,13 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     else:
         with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
+
+    # records                
+    for item in resources:
+        if not len(resources[item]) == 0:
+            template = env.get_template('{}.tf.j2'.format(item))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
+                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
 def main():
     args = parse_arguments().parse_args()
