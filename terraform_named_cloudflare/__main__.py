@@ -17,8 +17,8 @@ AWS_ACCOUNTID="6995"
 #          resource2 {
 #               name:VALUE, ttl:value, value:VALUE}}
 #    and so on for all the other lists with thier values
-#    resource equal to createResourceNameFromRecord() that we pass which is always the record name the we test now
-#    we still needs another value called recordName for becuase we do diffrent manipulation on it
+#    resource and resource2 will be equal to createResourceNameFromRecord(), which is always the record name the we parse "now"
+#    we still needs another value called recordName becuase we do diffrent manipulation on it and use it in deffrent places
 # }
 resources = {
     'A': {},
@@ -68,6 +68,7 @@ def fixRecordName(name):
         recordName = subDomainRecordName[1:]
     return recordName
 
+# remove trailing . for values
 def removeDotFromEnd(value):
     if value.endswith('.'):
         value=value[0:-1]
@@ -314,6 +315,7 @@ def ns(record):
         return True
     return False
 
+# input parametes for script
 def parse_arguments():
     """
     Function to handle argument parser configuration (argument definitions, default values and so on).
@@ -339,6 +341,7 @@ def parse_arguments():
     )
     return parser
 
+# parsing through the records
 def parse_zone(zone, rs):
     for record in rs['ResourceRecordSets']:
         print(record)
@@ -351,8 +354,6 @@ def parse_zone(zone, rs):
             continue
         if mx(record=record):
             continue
-        if srv(record=record):
-            continue
         if txt(record=record):
             continue
         # exclude NS records of the zone we work on
@@ -360,6 +361,7 @@ def parse_zone(zone, rs):
             continue
         print(record)
 
+# render for all files
 def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
     # # variables.tf
