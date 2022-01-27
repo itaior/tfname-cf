@@ -74,9 +74,9 @@ def a(record):
                 'value': removeDotFromEnd(record['ResourceRecords'][0]['Value'])
             }
         elif 'AliasTarget' in record:
-            resources['A'][resource] = {
+            resources['CNAME'][resource] = {
                 'name': recordName,
-                'ttl': "##TODO",
+                'ttl': "1",
                 'value':removeDotFromEnd(record['AliasTarget']['DNSName'])
             }   
         return True
@@ -97,9 +97,9 @@ def aaaa(record):
                 'value': removeDotFromEnd(record['ResourceRecords'][0]['Value'])
             }
         elif 'AliasTarget' in record:
-            resources['AAAA'][resource] = {
+            resources['CNAME'][resource] = {
                 'name': recordName,
-                'ttl': "##TODO",
+                'ttl': "1",
                 'value': removeDotFromEnd(record['AliasTarget']['DNSName'])
             }  
         return True
@@ -123,7 +123,7 @@ def cname(record):
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
                 'name': recordName,
-                'ttl': "##TODO",
+                'ttl': "1",
                 'value': removeDotFromEnd(record['AliasTarget']['DNSName'])
             }   
         return True
