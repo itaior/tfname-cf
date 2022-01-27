@@ -1,5 +1,5 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_1" {
+resource "cloudflare_record" "NS_{{ resource  }}_1" {
   name    = "{{ resources[resource].name }}"
   ttl     = "{{ resources[resource].ttl }}"
   type    = "NS"
@@ -7,7 +7,7 @@ resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_1" {
   zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_2" {
+resource "cloudflare_record" "NS_{{ resource  }}_2" {
   name    = "{{ resources[resource].name }}"
   ttl     = "{{ resources[resource].ttl }}"
   type    = "NS"
@@ -15,7 +15,7 @@ resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_2" {
   zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_3" {
+resource "cloudflare_record" "NS_{{ resource  }}_3" {
   name    = "{{ resources[resource].name }}"
   ttl     = "{{ resources[resource].ttl }}"
   type    = "NS"
@@ -23,7 +23,7 @@ resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_3" {
   zone_id = cloudflare_zone.{{ terrafromResource  }}.id
 }
 
-resource "cloudflare_record" "NS_{{ resource[0:-1]  }}_4" {
+resource "cloudflare_record" "NS_{{ resource  }}_4" {
   name    = "{{ resources[resource].name }}"
   ttl     = "{{ resources[resource].ttl }}"
   type    = "NS"

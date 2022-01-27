@@ -1,6 +1,6 @@
 resource "cloudflare_zone" "{{ terrafromResource }}" {
   zone = "{{ cloudflare_zone_name }}"
-  plan = "enterprise"
+  # plan = "enterprise"
 }
 
 resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {

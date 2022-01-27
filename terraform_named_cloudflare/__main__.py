@@ -19,20 +19,15 @@ resources = {
     'NS': {}
 }
 
-
-def comment(record):
-    # match = re.match(r'^;.*', record)
-    if match:
-        return True
-    return False
-
-
-def fix(name):
-    name = name['Name'].replace('.', '_')
+def createResourceNameFromRecord(record):
+    if record['Name'].endswith('.'):
+        name = record['Name'][0:-1].replace('.', '_')
+    else:
+        name = record['Name'].replace('.', '_')
     if re.match(pattern=r'^\d', string=name):
         name = '_{}'.format(name)
-    if name.startswith('\\052'):
-        name = name.replace('\\052', 'star')
+    if record['Name'].startswith('\\052'):
+        name = record['Name'].replace('\\052', 'star')
     return name
 
 def fixRecordName(name):
@@ -40,42 +35,49 @@ def fixRecordName(name):
         recordName = name.replace('\\052', '*')
     else:
         recordName = name
+        
+    if recordName.endswith('.'):
+        recordName = recordName[0:-1]
+
     # if 2 means that it must be the parrent zone so we dont need any change
-    if len(name.split('.')) == 2:
+    if len(recordName.split('.')) == 2:
         pass
-    # if 3 means only one sub zone we only need the first name
-    elif len(name.split('.')) == 3:
-        recordName = recordName.split(".")[0]
-    # esle means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
+    # else means we have more than 1 subdomain so we will add the subdomains name for example test.tikal.updater.com ->
     # the name of the record will be test.tikal -> we will strip the last 2 names
     else:
         subDomainRecordName = ""
-        for i in range(0, len(recordName.split("."))-2):
-            subDomainRecordName = subDomainRecordName +"."+ recordName.split(".")[i]
+        for i in range(0, len(recordName.split('.'))-2):
+            subDomainRecordName = subDomainRecordName +"."+ recordName.split('.')[i]
         # set records name after the loop
         recordName = subDomainRecordName[1:]
     return recordName
+
+def removeDotFromEnd(value):
+    if value.endswith('.'):
+        value=value[0:-1]
+    return value
+
 
 def a(record):
     # match = re.match(A, record)
     print(record)
     match = (record['Type'] == 'A')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['A']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
-        if 'ResourceRecords' in  record:
+        recordName = fixRecordName(record['Name'])
+        if 'ResourceRecords' in record:
             resources['A'][resource] = {
                 'name': recordName,
                 'ttl': 1,
-                'value': record['ResourceRecords'][0]['Value']
+                'value': removeDotFromEnd(record['ResourceRecords'][0]['Value'])
             }
         elif 'AliasTarget' in record:
             resources['A'][resource] = {
                 'name': recordName,
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName'][0:-1]
+                'value':removeDotFromEnd(record['AliasTarget']['DNSName'])
             }   
         return True
     return False
@@ -84,21 +86,21 @@ def a(record):
 def aaaa(record):
     match = (record['Type'] == 'AAAA')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['AAAA']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
+        recordName = fixRecordName(record['Name'])
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': recordName,
                 'ttl': 1,
-                'value': record['ResourceRecords'][0]['Value']
+                'value': removeDotFromEnd(record['ResourceRecords'][0]['Value'])
             }
         elif 'AliasTarget' in record:
             resources['AAAA'][resource] = {
                 'name': recordName,
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName'][0:-1]
+                'value': removeDotFromEnd(record['AliasTarget']['DNSName'])
             }  
         return True
     return False
@@ -108,21 +110,21 @@ def cname(record):
     # match = re.match(CNAME, record)
     match = (record['Type'] == 'CNAME')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['CNAME']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
-        if 'ResourceRecords' in  record:      
+        recordName = fixRecordName(record['Name'])
+        if 'ResourceRecords' in  record:     
             resources['CNAME'][resource] = {
                 'name': recordName,
                 'ttl': 1,
-                'value': record['ResourceRecords'][0]['Value'][0:-1]
+                'value': removeDotFromEnd(record['ResourceRecords'][0]['Value'])
             }  
         elif 'AliasTarget' in record:
             resources['CNAME'][resource] = {
                 'name': recordName,
                 'ttl': "##TODO",
-                'value': record['AliasTarget']['DNSName'][0:-1]
+                'value': removeDotFromEnd(record['AliasTarget']['DNSName'])
             }   
         return True
     return False
@@ -132,10 +134,10 @@ def mx(record):
     # match = re.match(MX, record)
     match = (record['Type'] == 'MX')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['MX']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
+        recordName = fixRecordName(record['Name'])
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
@@ -153,6 +155,20 @@ def mx(record):
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
             setPV2 = record['ResourceRecords'][1]['Value'].split()  
+
+            resources['MX'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'priority1': setPV[0],
+                'priority2': setPV2[0],
+                'value1': setPV[1],
+                'value2': setPV2[1]
+                }
+        elif x == 3:
+            # get priority and value
+            setPV = record['ResourceRecords'][0]['Value'].split()
+            setPV2 = record['ResourceRecords'][1]['Value'].split()
+            setPV3 = record['ResourceRecords'][1]['Value'].split() 
 
             resources['MX'][resource] = {
                 'name': recordName,
@@ -191,10 +207,10 @@ def txt(record):
     # match = re.match(TXT, record)
     match = (record['Type'] == 'TXT')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['TXT']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
+        recordName = fixRecordName(record['Name'])
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -214,27 +230,27 @@ def ns(record):
     print(record)
     match = (record['Type'] == 'NS')
     if match:
-        resource = fix(record)
+        resource = createResourceNameFromRecord(record)
         if resource in resources['NS']:
             return False
-        recordName = fixRecordName(record['Name'][0:-1])
+        recordName = fixRecordName(record['Name'])
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
             resources['NS'][resource] = {
                 'name': recordName,
                 'ttl': 1,
-                'value1': record['ResourceRecords'][0]['Value'][0:-1],
-                'value2': record['ResourceRecords'][1]['Value'][0:-1],
-                'value3': record['ResourceRecords'][2]['Value'][0:-1],
-                'value4': record['ResourceRecords'][3]['Value'][0:-1]
+                'value1': removeDotFromEnd(record['ResourceRecords'][0]['Value']),
+                'value2': removeDotFromEnd(record['ResourceRecords'][1]['Value']),
+                'value3': removeDotFromEnd(record['ResourceRecords'][2]['Value']),
+                'value4': removeDotFromEnd(record['ResourceRecords'][3]['Value'])
                 }
         elif x == 2:           
             resources['NS'][resource] = {
                 'name': recordName,
                 'ttl': 1,
-                'value1': record['ResourceRecords'][0]['Value'][0:-1],
-                'value2': record['ResourceRecords'][1]['Value'][0:-1],
+                'value1': removeDotFromEnd(record['ResourceRecords'][0]['Value']),
+                'value2': removeDotFromEnd(record['ResourceRecords'][1]['Value']),
                 'value3': "##TODO",
                 'value4': "##TODO"
                 }
@@ -305,16 +321,12 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
 
-    # nslookup                
+        # records                
     for item in resources:
-        # remove zone name from dictinary
-        if  resources[item].get(zone['Name'].replace('.', '_')):
-            resources[item].pop(zone['Name'].replace('.', '_'))
-        # create file only for the necessary records
         if not len(resources[item]) == 0:
-            template = env.get_template('nslookup{}.sh.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], parentZone=zone['Name'][0:-1], cloudflare_ns_record=cloudflare_ns_record, space=" "))
+            template = env.get_template('{}.tf.j2'.format(item))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
+                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
 
     # countRecords.txt
     recordA         = len(resources['A'])
@@ -364,12 +376,17 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
 
-    # records                
+    # nslookup                
     for item in resources:
+        # remove zone name from dictinary
+        if  resources[item].get(zone['Name'].replace('.', '_')):
+            resources[item].pop(zone['Name'].replace('.', '_'))
+        # create file only for the necessary records
         if not len(resources[item]) == 0:
-            template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
+            template = env.get_template('nslookup{}.sh.j2'.format(item))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'a') as target:
+                target.write(template.render(resources=resources[item], parentZone=zone['Name'][0:-1], cloudflare_ns_record=cloudflare_ns_record, space=" "))
+
 
 def main():
     args = parse_arguments().parse_args()
@@ -407,3 +424,25 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# {'ResponseMetadata': {'RequestId': 'a45a9681-b8c5-4b07-ada4-cf012a69e5ac',
+#   'HTTPStatusCode': 200,
+#   'HTTPHeaders': {'x-amzn-requestid': 'a45a9681-b8c5-4b07-ada4-cf012a69e5ac',
+#    'content-type': 'text/xml',
+#    'content-length': '919',
+#    'date': 'Thu, 27 Jan 2022 10:53:34 GMT'},
+#   'RetryAttempts': 0},
+#  'ResourceRecordSets': [{'Name': 'prod.bridgevine.io.',
+#    'Type': 'NS',
+#    'TTL': 172800,
+#    'ResourceRecords': [{'Value': 'ns-1664.awsdns-16.co.uk.'},
+#     {'Value': 'ns-367.awsdns-45.com.'},
+#     {'Value': 'ns-859.awsdns-43.net.'},
+#     {'Value': 'ns-1025.awsdns-00.org.'}]},
+#   {'Name': 'prod.bridgevine.io.',
+#    'Type': 'SOA',
+#    'TTL': 900,
+#    'ResourceRecords': [{'Value': 'ns-1664.awsdns-16.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400'}]}],
+#  'IsTruncated': False,
+#  'MaxItems': '300'}

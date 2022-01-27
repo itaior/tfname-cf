@@ -1,5 +1,5 @@
 {%- for resource in resources -%}
-resource "cloudflare_record" "AAAA_{{ resource[0:-1] }}" {
+resource "cloudflare_record" "AAAA_{{ resource }}" {
   name    = "{{ resources[resource].name }}"
   ttl     = "{{ resources[resource].ttl }}"
   type    = "AAAA"
