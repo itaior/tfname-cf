@@ -147,9 +147,15 @@ def mx(record):
                 'name': recordName,
                 'ttl': 1,
                 'priority1': setPV[0],
-                'value1': setPV[1],
                 'priority2': "##TODO",
-                'value2': "##TODO"
+                'priority3': "##TODO",
+                'priority4': "##TODO",
+                'priority5': "##TODO",
+                'value1': setPV[1],
+                'value2': "##TODO",
+                'value3': "##TODO",
+                'value4': "##TODO",
+                'value5': "##TODO"
             }
         elif x == 2:
             # get priority and value
@@ -161,8 +167,14 @@ def mx(record):
                 'ttl': 1,
                 'priority1': setPV[0],
                 'priority2': setPV2[0],
+                'priority3': "##TODO",
+                'priority4': "##TODO",
+                'priority5': "##TODO",
                 'value1': setPV[1],
-                'value2': setPV2[1]
+                'value2': setPV2[1],
+                'value3': "##TODO",
+                'value4': "##TODO",
+                'value5': "##TODO"
                 }
         elif x == 3:
             # get priority and value
@@ -176,9 +188,13 @@ def mx(record):
                 'priority1': setPV[0],
                 'priority2': setPV2[0],
                 'priority3': setPV3[0],
+                'priority4': "##TODO",
+                'priority5': "##TODO",
                 'value1': setPV[1],
                 'value2': setPV2[1],
-                'value3': setPV3[1]
+                'value3': setPV3[1],
+                'value4': "##TODO",
+                'value5': "##TODO"
                 }
         elif x == 4:
             # get priority and value
@@ -194,10 +210,12 @@ def mx(record):
                 'priority2': setPV2[0],
                 'priority3': setPV3[0],
                 'priority4': setPV4[0],
+                'priority5': "##TODO",
                 'value1': setPV[1],
                 'value2': setPV2[1],
                 'value3': setPV3[1],
-                'value4': setPV4[1]
+                'value4': setPV4[1],
+                'value5': "##TODO"
                 }
         elif x == 5:
             # get priority and value
