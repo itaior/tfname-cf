@@ -168,15 +168,58 @@ def mx(record):
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
             setPV2 = record['ResourceRecords'][1]['Value'].split()
-            setPV3 = record['ResourceRecords'][1]['Value'].split() 
+            setPV3 = record['ResourceRecords'][2]['Value'].split() 
 
             resources['MX'][resource] = {
                 'name': recordName,
                 'ttl': 1,
                 'priority1': setPV[0],
                 'priority2': setPV2[0],
+                'priority3': setPV3[0],
                 'value1': setPV[1],
-                'value2': setPV2[1]
+                'value2': setPV2[1],
+                'value3': setPV3[1]
+                }
+        elif x == 4:
+            # get priority and value
+            setPV = record['ResourceRecords'][0]['Value'].split()
+            setPV2 = record['ResourceRecords'][1]['Value'].split()
+            setPV3 = record['ResourceRecords'][2]['Value'].split()
+            setPV4 = record['ResourceRecords'][3]['Value'].split()
+
+            resources['MX'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'priority1': setPV[0],
+                'priority2': setPV2[0],
+                'priority3': setPV3[0],
+                'priority4': setPV4[0],
+                'value1': setPV[1],
+                'value2': setPV2[1],
+                'value3': setPV3[1],
+                'value4': setPV4[1]
+                }
+        elif x == 5:
+            # get priority and value
+            setPV = record['ResourceRecords'][0]['Value'].split()
+            setPV2 = record['ResourceRecords'][1]['Value'].split()
+            setPV3 = record['ResourceRecords'][2]['Value'].split()
+            setPV4 = record['ResourceRecords'][3]['Value'].split()
+            setPV5 = record['ResourceRecords'][4]['Value'].split()
+
+            resources['MX'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'priority1': setPV[0],
+                'priority2': setPV2[0],
+                'priority3': setPV3[0],
+                'priority4': setPV4[0],
+                'priority5': setPV5[0],
+                'value1': setPV[1],
+                'value2': setPV2[1],
+                'value3': setPV3[1],
+                'value4': setPV4[1],
+                'value5': setPV5[1]
                 }
         return True
     return False
@@ -380,7 +423,8 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         # remove zone name from dictinary
         if  resources[item].get(zone['Name'].replace('.', '_')):
-            resources[item].pop(zone['Name'].replace('.', '_'))
+            for i in range (0, len(resources[item].get(zone['Name'].replace('.', '_')))):
+                resources[item].pop(zone['Name'].replace('.', '_'))
         # create file only for the necessary records
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))

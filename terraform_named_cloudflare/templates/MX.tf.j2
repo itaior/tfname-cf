@@ -17,4 +17,31 @@ resource "cloudflare_record" "MX_{{ resource }}_2" {
   zone_id  = cloudflare_zone.{{ terrafromResource }}.id
 }
 
+resource "cloudflare_record" "MX_{{ resource }}_3" {
+  name     = "{{ resources[resource].name }}"
+  ttl      = {{ resources[resource].ttl }}
+  type     = "MX"
+  priority = "{{ resources[resource].priority3 }}"
+  value    = "{{ resources[resource].value3 }}"
+  zone_id  = cloudflare_zone.{{ terrafromResource }}.id
+}
+
+resource "cloudflare_record" "MX_{{ resource }}_4" {
+  name     = "{{ resources[resource].name }}"
+  ttl      = {{ resources[resource].ttl }}
+  type     = "MX"
+  priority = "{{ resources[resource].priority4 }}"
+  value    = "{{ resources[resource].value4 }}"
+  zone_id  = cloudflare_zone.{{ terrafromResource }}.id
+}
+
+resource "cloudflare_record" "MX_{{ resource }}_5" {
+  name     = "{{ resources[resource].name }}"
+  ttl      = {{ resources[resource].ttl }}
+  type     = "MX"
+  priority = "{{ resources[resource].priority5 }}"
+  value    = "{{ resources[resource].value5 }}"
+  zone_id  = cloudflare_zone.{{ terrafromResource }}.id
+}
+
 {% endfor -%}
