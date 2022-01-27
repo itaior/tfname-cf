@@ -9,6 +9,17 @@ import os
 
 AWS_ACCOUNTID="6995"
 
+# the resources dict will look like:
+# resources = {
+#    'A': {
+#         resource {
+#               name:VALUE, ttl:value, value:VALUE},
+#          resource2 {
+#               name:VALUE, ttl:value, value:VALUE}}
+#    and so on for all the other lists with thier values
+#    resource equal to createResourceNameFromRecord() that we pass which is always the record name the we test now
+#    we still needs another value called recordName for becuase we do diffrent manipulation on it
+# }
 resources = {
     'A': {},
     'AAAA': {},
@@ -19,6 +30,7 @@ resources = {
     'NS': {}
 }
 
+# sets the name of the recources in for example resources['A'][the name of the resource]
 def createResourceNameFromRecord(record):
     if record['Name'].endswith('.'):
         name = record['Name'][0:-1].replace('.', '_')
@@ -30,6 +42,10 @@ def createResourceNameFromRecord(record):
         name = record['Name'].replace('\\052', 'star')
     return name
 
+# sets the of the name of the record
+# removing the . at the end of the name
+# changeing boto3 output of \052 back to star
+# if subDomain - get only the subDomain name - remove the xxx.com from the name 
 def fixRecordName(name):
     if name.startswith('\\052'):
         recordName = name.replace('\\052', '*')
@@ -57,7 +73,7 @@ def removeDotFromEnd(value):
         value=value[0:-1]
     return value
 
-
+# addes resources to resources['A'] 
 def a(record):
     # match = re.match(A, record)
     print(record)
@@ -82,7 +98,7 @@ def a(record):
         return True
     return False
 
-
+# addes resources to resources['AAAA'] 
 def aaaa(record):
     match = (record['Type'] == 'AAAA')
     if match:
@@ -105,7 +121,7 @@ def aaaa(record):
         return True
     return False
 
-
+# addes resources to resources['CNAME'] 
 def cname(record):
     # match = re.match(CNAME, record)
     match = (record['Type'] == 'CNAME')
@@ -129,7 +145,7 @@ def cname(record):
         return True
     return False
 
-
+# addes resources to resources['MX'] 
 def mx(record):
     # match = re.match(MX, record)
     match = (record['Type'] == 'MX')
@@ -242,28 +258,7 @@ def mx(record):
         return True
     return False
 
-def srv(record):
-    # match = re.match(SRV, record)
-    match= False
-    if match:
-        resource = fix(match.group(1))
-        if resource in resources['SRV']:
-            return False
-        resources['SRV'][resource] = {
-            'data_name': match.group(4),
-            'name': match.group(1),
-            'port': match.group(8),
-            'priority': match.group(6),
-            'proto': match.group(3),
-            'service': match.group(2),
-            'target': match.group(9),
-            'ttl': match.group(5),
-            'weight': match.group(7)
-        }
-        return True
-    return False
-
-
+# addes resources to resources['TXT'] 
 def txt(record):
     # match = re.match(TXT, record)
     match = (record['Type'] == 'TXT')
@@ -286,6 +281,7 @@ def txt(record):
         return True
     return False
 
+# addes resources to resources['NS'] 
 def ns(record):
     # match = re.match(NS, record)
     print(record)
@@ -377,17 +373,17 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # cloudflareZone.tf
+    # cloudflare_zone_name=zoneName - replacing the _ with .
     template = env.get_template('cloudflareZone.tf.j2')
-    terrafromResource=zone["Name"][0:-1].replace('.', '_')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
-        target.write(template.render(terrafromResource=terrafromResource, cloudflare_zone_name=zone["Name"][0:-1]))
+        target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name=zoneName.replace('_', '.')))
 
-        # records                
+    # records                
     for item in resources:
         if not len(resources[item]) == 0:
             template = env.get_template('{}.tf.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], terrafromResource=terrafromResource))
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/records.tf', 'a') as target:
+                target.write(template.render(resources=resources[item], terrafromResource=zoneName))
 
     # countRecords.txt
     recordA         = len(resources['A'])
@@ -441,44 +437,63 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         # remove zone name from dictinary
         if  resources[item].get(zone['Name'].replace('.', '_')):
-            for i in range (0, len(resources[item].get(zone['Name'].replace('.', '_')))):
-                resources[item].pop(zone['Name'].replace('.', '_'))
+            resources[item].pop(zone['Name'].replace('.', '_'))
         # create file only for the necessary records
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], parentZone=zone['Name'][0:-1], cloudflare_ns_record=cloudflare_ns_record, space=" "))
+                target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
 
 def main():
+    # get input parameters
     args = parse_arguments().parse_args()
     account_id = args.account_id
     cloudflare_ns_record = args.ns_record
+    
+    # get zones list
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
+
+    # check if folder exists
     if os.path.exists("./"+AWS_ACCOUNTID):
         pass
     else:
         os.mkdir("./"+AWS_ACCOUNTID)
+    
+    # filter out private domains
     for zone in hostedzone["HostedZones"]:
         if not zone["Config"]["PrivateZone"]:
+            # get all the records from the zone
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
-            # set correct name for terraform module
+
+            # set zone name
             zoneName=zone["Name"].replace('.', '_')
             # silce the last '_' from the folder name
-            zoneName=zoneName[0:-1]
+            if zone['Name'].endswith('.'):
+                zoneName=zoneName[0:-1]
+
+            # check if folder exists
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
                 pass
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName)
+
+            # check if folder exists
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName+"/error"):
                 pass
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/error")
+            
+            # parsing through the records list
             parse_zone(zone, rs)
+
+            # writing to files
             render(zone, rs, zoneName, account_id, cloudflare_ns_record)
+
             # terraform fmt check
             os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+' && terraform fmt && cd -')
+
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()

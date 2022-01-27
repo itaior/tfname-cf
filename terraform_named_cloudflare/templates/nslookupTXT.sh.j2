@@ -1,7 +1,7 @@
 #!/bin/bash
  
 # Declare a string array with type
-declare -a StringArray=( "{{ parentZone }}"{{ space }}{%- for resource in resources -%} "{{ resources[resource].name  }}.{{ parentZone }}" {% endfor -%})
+declare -a StringArray=( "{{ parentDomain }}"{{ space }}{%- for resource in resources -%} "{{ resources[resource].name  }}.{{ parentDomain }}" {% endfor -%})
  
 # Read the array values with space
 for val in "${StringArray[@]}"; do
