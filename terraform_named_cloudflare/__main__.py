@@ -424,25 +424,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# {'ResponseMetadata': {'RequestId': 'a45a9681-b8c5-4b07-ada4-cf012a69e5ac',
-#   'HTTPStatusCode': 200,
-#   'HTTPHeaders': {'x-amzn-requestid': 'a45a9681-b8c5-4b07-ada4-cf012a69e5ac',
-#    'content-type': 'text/xml',
-#    'content-length': '919',
-#    'date': 'Thu, 27 Jan 2022 10:53:34 GMT'},
-#   'RetryAttempts': 0},
-#  'ResourceRecordSets': [{'Name': 'prod.bridgevine.io.',
-#    'Type': 'NS',
-#    'TTL': 172800,
-#    'ResourceRecords': [{'Value': 'ns-1664.awsdns-16.co.uk.'},
-#     {'Value': 'ns-367.awsdns-45.com.'},
-#     {'Value': 'ns-859.awsdns-43.net.'},
-#     {'Value': 'ns-1025.awsdns-00.org.'}]},
-#   {'Name': 'prod.bridgevine.io.',
-#    'Type': 'SOA',
-#    'TTL': 900,
-#    'ResourceRecords': [{'Value': 'ns-1664.awsdns-16.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400'}]}],
-#  'IsTruncated': False,
-#  'MaxItems': '300'}
