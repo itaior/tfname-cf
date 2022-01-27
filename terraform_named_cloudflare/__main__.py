@@ -38,8 +38,8 @@ def createResourceNameFromRecord(record):
         name = record['Name'].replace('.', '_')
     if re.match(pattern=r'^\d', string=name):
         name = '_{}'.format(name)
-    if record['Name'].startswith('\\052'):
-        name = record['Name'].replace('\\052', 'star')
+    if name.startswith('\\052'):
+        name = name.replace('\\052', 'star')
     return name
 
 # sets the of the name of the record
