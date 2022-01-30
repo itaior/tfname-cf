@@ -7,17 +7,17 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID="6995"
+AWS_ACCOUNTID="6995_test"
 
 # the resources dict will look like:
 # resources = {
 #    'A': {
-#         resource {
+#         resource: {
 #               name:VALUE, ttl:value, value:VALUE},
-#          resource2 {
+#          resource2: {
 #               name:VALUE, ttl:value, value:VALUE}}
 #    and so on for all the other lists with thier values
-#    resource and resource2 will be equal to createResourceNameFromRecord(), which is always the record name the we parse "now"
+#    resource and resource2 will be equal to set_ResourceName(), which is always the record name the we parse "now"
 #    we still needs another value called recordName becuase we do diffrent manipulation on it and use it in deffrent places
 # }
 resources = {
@@ -31,8 +31,16 @@ resources = {
     'NS': {}
 }
 
+def set_ZoneName(zone):
+    # set zone name
+    zoneName=zone["Name"].replace('.', '_')
+    # silce the last '_' from the folder name
+    if zone['Name'].endswith('.'):
+        zoneName=zoneName[0:-1]
+    return zoneName
+
 # sets the name of the recources in for example resources['A'][the name of the resource]
-def createResourceNameFromRecord(record):
+def set_ResourceName(record):
     if record['Name'].endswith('.'):
         name = record['Name'][0:-1].replace('.', '_')
     else:
@@ -47,7 +55,7 @@ def createResourceNameFromRecord(record):
 # removing the . at the end of the name
 # changeing boto3 output of \052 back to star
 # if subDomain - get only the subDomain name - remove the xxx.com from the name 
-def fixRecordName(name):
+def set_RecordName(name):
     if name.startswith('\\052'):
         recordName = name.replace('\\052', '*')
     else:
@@ -81,10 +89,10 @@ def a(record):
     print(record)
     match = (record['Type'] == 'A')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['A']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         if 'ResourceRecords' in record:
             resources['A'][resource] = {
                 'name': recordName,
@@ -104,10 +112,10 @@ def a(record):
 def aaaa(record):
     match = (record['Type'] == 'AAAA')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['AAAA']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         if 'ResourceRecords' in  record:      
             resources['AAAA'][resource] = {
                 'name': recordName,
@@ -128,10 +136,10 @@ def cname(record):
     # match = re.match(CNAME, record)
     match = (record['Type'] == 'CNAME')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['CNAME']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         if 'ResourceRecords' in  record:     
             resources['CNAME'][resource] = {
                 'name': recordName,
@@ -152,10 +160,10 @@ def mx(record):
     # match = re.match(MX, record)
     match = (record['Type'] == 'MX')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['MX']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         x = int(len(record['ResourceRecords']))
         if x == 1:
             # get priority and value
@@ -265,10 +273,10 @@ def txt(record):
     # match = re.match(TXT, record)
     match = (record['Type'] == 'TXT')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['TXT']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
@@ -289,10 +297,10 @@ def ns(record):
     print(record)
     match = (record['Type'] == 'NS')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         if resource in resources['NS']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
       # check the number of values in the ns record
         x = int(len(record['ResourceRecords']))
         if x == 4:
@@ -322,13 +330,13 @@ def spf(record):
     print(record)
     match = (record['Type'] == 'SPF')
     if match:
-        resource = createResourceNameFromRecord(record)
+        resource = set_ResourceName(record)
         value = record['ResourceRecords'][0]['Value'].replace('"', '')
         if re.match(r'.*DKIM', value):
             value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
         if resource in resources['SPF']:
             return False
-        recordName = fixRecordName(record['Name'])
+        recordName = set_RecordName(record['Name'])
         resources['SPF'][resource] = {
             'name': recordName,
             'ttl': 1,
@@ -498,11 +506,7 @@ def main():
             rs=client.list_resource_record_sets(HostedZoneId=zone["Id"],MaxItems='2000')
 
             # set zone name
-            zoneName=zone["Name"].replace('.', '_')
-            # silce the last '_' from the folder name
-            if zone['Name'].endswith('.'):
-                zoneName=zoneName[0:-1]
-
+            zoneName = set_ZoneName(zone)
             # check if folder exists
             if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
                 pass
@@ -527,6 +531,11 @@ def main():
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
+        # if it is a private zone - write to file zone name that was filtered
+        else:
+            zoneName = set_ZoneName(zone)
+            with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_PrivateZoneFiltered.txt', 'a') as target:
+                target.write(zoneName.replace('_', '.') + "\n")
 
 
 if __name__ == '__main__':
