@@ -420,7 +420,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     recordTXT       = len(resources['TXT'])
     recordNS        = len(resources['NS'])
     recordSPF       = len(resources['SPF'])
-    recordsCreated  = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
+    recordsCreated  = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS + recordSPF
     awsArecord      = 0
     awsAAAArecord   = 0
     awsMXrecord     = 0
