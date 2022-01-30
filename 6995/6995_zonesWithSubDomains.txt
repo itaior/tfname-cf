@@ -1,3 +1,0 @@
-prod.bridgevine.io
-prod-tools.bridgevine.io
-bridgevine.io
