@@ -25,6 +25,7 @@ resources = {
     'AAAA': {},
     'CNAME': {},
     'MX': {},
+    'SPF': {},
     'SRV': {},
     'TXT': {},
     'NS': {}
@@ -315,6 +316,27 @@ def ns(record):
         return True
     return False
 
+# addes resources to resources['SPF'] 
+def spf(record):
+    # match = re.match(A, record)
+    print(record)
+    match = (record['Type'] == 'SPF')
+    if match:
+        resource = createResourceNameFromRecord(record)
+        value = record['ResourceRecords'][0]['Value'].replace('"', '')
+        if re.match(r'.*DKIM', value):
+            value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
+        if resource in resources['SPF']:
+            return False
+        recordName = fixRecordName(record['Name'])
+        resources['SPF'][resource] = {
+            'name': recordName,
+            'ttl': 1,
+            'value': value
+        } 
+        return True
+    return False
+
 # input parametes for script
 def parse_arguments():
     """
@@ -356,6 +378,8 @@ def parse_zone(zone, rs):
             continue
         if txt(record=record):
             continue
+        if spf(record=record):
+            continue
         # exclude NS records of the zone we work on
         if record['Name'] != zone["Name"] and ns(record=record):
             continue
@@ -395,6 +419,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     recordSRV       = len(resources['SRV'])
     recordTXT       = len(resources['TXT'])
     recordNS        = len(resources['NS'])
+    recordSPF       = len(resources['SPF'])
     recordsCreated  = recordA + recordAAAA + recordCANME + recordMX + recordSRV + recordTXT + recordNS
     awsArecord      = 0
     awsAAAArecord   = 0
@@ -403,6 +428,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     awsCNAMErecord  = 0
     awsSRVrecord    = 0
     awsNSrecord     = 0
+    awsSPFrecord    = 0
     for i in rs['ResourceRecordSets']:
         if i['Type'] == 'A':
             awsArecord += 1
@@ -418,6 +444,8 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             awsCNAMErecord += 1
         elif i['Type'] == 'SRV':
             awsSRVrecord += 1
+        elif i['Type'] == 'SPF':
+            awsSPFrecord += 1
 
     template = env.get_template('countRecords.txt.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
@@ -425,7 +453,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, 
         recordNS=recordNS, awsArecord=awsArecord, awsAAAArecord=awsAAAArecord, awsMXrecord=awsMXrecord, 
         awsTXTrecord=awsTXTrecord, awsCNAMErecord=awsCNAMErecord, awsSRVrecord=awsSRVrecord, awsNSrecord=awsNSrecord,
-        rs=(len(rs['ResourceRecordSets']))))
+        awsSPFrecord=awsSPFrecord, recordSPF=recordSPF, rs=(len(rs['ResourceRecordSets']))))
     
     # 0 subzones
     if recordNS == 0 and len(zoneName.split('_')) == 2:
