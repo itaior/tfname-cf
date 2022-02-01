@@ -7,7 +7,7 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID="6995_test"
+AWS_ACCOUNTID="8984"
 
 # the resources dict will look like:
 # resources = {
@@ -531,7 +531,7 @@ def main():
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
-        # if it is a private zone - write to file zone name that was filtered
+        # if it's a private zone - write the filtered zone name to file
         else:
             zoneName = set_ZoneName(zone)
             with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_PrivateZoneFiltered.txt', 'a') as target:

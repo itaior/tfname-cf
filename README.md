@@ -46,31 +46,33 @@ modules listed in the [requirements.txt](requirements.txt) and automatically
 installed with module.
 
 ## Limitations
-There are some edge cases that might be missed, like MX record with more than 2 values.
+There are some edge cases that might be missed.
 In order to over come those cases we created a summry file, named 'countRecords.txt', that will compare the records
 that were templated as terraform cloudflare resources with the actual records in the aws route53 zone.
 
+Search "##TODO" for MX records that had less than 5 values and remove those resources.
+
 For example:
 ```
-    A                       = "108"
-    AAAA                    = "0" 
-    CNAME                   = "14" 
-    MX                      = "0"
-    SRV                     = "0"
-    TXT                     = "4"
-    NS                      = "0"
+    A                   = "108"
+    AAAA                = "0" 
+    CNAME               = "14" 
+    MX                  = "0"
+    SPF                 = "0"
+    TXT                 = "4"
+    NS                  = "0"
   -------------------------------------------------
-  total records Created   = "126"
+  total records Created = "126"
     
-  total recrds in AWS     = "129"
+  total recrds in AWS   = "129"
   -------------------------------------------------
-    A                       = "108"
-    AAAA                    = "0" 
-    CNAME                   = "14" 
-    MX                      = "1"
-    SRV                     = "0"
-    TXT                     = "4"
-    NS                      = "1"
+    A                   = "108"
+    AAAA                = "0" 
+    CNAME               = "14" 
+    MX                  = "1"
+    SPF                 = "0"
+    TXT                 = "4"
+    NS                  = "1"
 ```
 
 In this case we can see that the tool missed one edge case of MX record and there for we should check this case in the our
@@ -86,6 +88,7 @@ Currently this module supports the next types of DNS records:
 - AAAA
 - CNAME
 - MX
+- SPF
 - TXT
 - NS
 

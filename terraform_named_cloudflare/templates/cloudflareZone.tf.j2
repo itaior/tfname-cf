@@ -16,7 +16,7 @@ resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {
     browser_check               = "on"
     cache_level                 = "aggressive"
     challenge_ttl               = 1800
-    # ciphers                   = ???
+    # ciphers                     = ???
     cname_flattening            = "flatten_at_root"
     development_mode            = "off"
     early_hints                 = "off"
@@ -35,9 +35,9 @@ resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {
     opportunistic_encryption    = "on"
     opportunistic_onion         = "off"
     orange_to_orange            = "on"
-    origin_error_page_pass_thru = "off"
+    # origin_error_page_pass_thru = "off"
     polish                      = "off"
-    prefetch_preload            = "off"
+    # prefetch_preload            = "off"
     privacy_pass                = "off"
     proxy_read_timeout          = "100"
     pseudo_ipv4                 = "off"
@@ -45,7 +45,7 @@ resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {
     rocket_loader               = "off"
     security_level              = "medium"
     server_side_exclude         = "on"
-    sort_query_string_for_cache = "off"
+    # sort_query_string_for_cache = "off"
     ssl                         = "off"
     tls_1_3                     = "off"
     tls_client_auth             = "on"
