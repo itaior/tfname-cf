@@ -1,0 +1,8 @@
+#!/bin/bash
+
+git checkout -b add-{{ cloudflare_zone_name }}-zone
+git add main.tf
+git add zone.tf
+git commit -m "feat(cloudflare/zones): add {{ cloudflare_zone_name }} zone" -m "feat(cloudflare/zones): add {{ cloudflare_zone_name }} zone"
+git push -u origin add-{{ cloudflare_zone_name }}-zone
+git switch main

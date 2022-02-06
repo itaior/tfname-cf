@@ -6,6 +6,7 @@ import jinja2
 import re
 import boto3
 import os
+import stat
 
 # input parametes for script
 def parse_arguments():
@@ -49,6 +50,13 @@ def render_gd_zones(zoneName, gd_folder_name, cf_account_id):
     with open("./" + gd_folder_name + "/" + zoneName + '/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name = zoneName.replace('_', '.')))
 
+    # create git.sh file
+    template = env.get_template('git.sh.j2')
+    with open("./" + gd_folder_name + "/" + zoneName + '/gitcmd.sh', 'w') as target:
+        target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name = zoneName.replace('_', '.')))
+        st = os.stat("./" + gd_folder_name + "/" + zoneName + '/gitcmd.sh')
+        os.chmod("./" + gd_folder_name + "/" + zoneName + '/gitcmd.sh', st.st_mode | stat.S_IEXEC)
+
 
 
 def main():
@@ -82,10 +90,10 @@ def main():
             os.mkdir("./" + gd_folder_name + "/" + zoneName)
 
         # check if folder exists
-        if os.path.exists("./" + gd_folder_name + "/" + zoneName + "/error"):
-            pass
-        else:
-            os.mkdir("./" + gd_folder_name + "/" + zoneName + "/error")
+        # if os.path.exists("./" + gd_folder_name + "/" + zoneName + "/error"):
+        #     pass
+        # else:
+        #     os.mkdir("./" + gd_folder_name + "/" + zoneName + "/error")
 
         render_gd_zones(zoneName, gd_folder_name, account_id)
           
