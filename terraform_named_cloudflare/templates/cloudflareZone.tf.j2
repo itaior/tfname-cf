@@ -3,8 +3,8 @@ resource "cloudflare_zone" "{{ terrafromResource }}" {
   # plan = "enterprise"
 }
 
-# resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {
-#   zone_id = cloudflare_zone.{{ terrafromResource }}.id
+resource "cloudflare_zone_settings_override" "{{ terrafromResource }}" {
+  zone_id = cloudflare_zone.{{ terrafromResource }}.id
 
 #   settings {
 #     always_online               = "on"
@@ -77,4 +77,4 @@ resource "cloudflare_zone" "{{ terrafromResource }}" {
 #     #   preload            = true
 #     # }
 #   }
-# }
+}
