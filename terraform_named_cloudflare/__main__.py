@@ -7,7 +7,7 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID="8984"
+AWS_ACCOUNTID="3716"
 
 # the resources dict will look like:
 # resources = {
@@ -177,7 +177,7 @@ def mx(record):
                 'priority3': "##TODO",
                 'priority4': "##TODO",
                 'priority5': "##TODO",
-                'value1': setPV[1],
+                'value1': removeDotFromEnd(setPV[1]),
                 'value2': "##TODO",
                 'value3': "##TODO",
                 'value4': "##TODO",
@@ -196,8 +196,8 @@ def mx(record):
                 'priority3': "##TODO",
                 'priority4': "##TODO",
                 'priority5': "##TODO",
-                'value1': setPV[1],
-                'value2': setPV2[1],
+                'value1': removeDotFromEnd(setPV[1]),
+                'value2': removeDotFromEnd(setPV2[1]),
                 'value3': "##TODO",
                 'value4': "##TODO",
                 'value5': "##TODO"
@@ -216,9 +216,9 @@ def mx(record):
                 'priority3': setPV3[0],
                 'priority4': "##TODO",
                 'priority5': "##TODO",
-                'value1': setPV[1],
-                'value2': setPV2[1],
-                'value3': setPV3[1],
+                'value1': removeDotFromEnd(setPV[1]),
+                'value2': removeDotFromEnd(setPV2[1]),
+                'value3': removeDotFromEnd(setPV3[1]),
                 'value4': "##TODO",
                 'value5': "##TODO"
                 }
@@ -237,10 +237,10 @@ def mx(record):
                 'priority3': setPV3[0],
                 'priority4': setPV4[0],
                 'priority5': "##TODO",
-                'value1': setPV[1],
-                'value2': setPV2[1],
-                'value3': setPV3[1],
-                'value4': setPV4[1],
+                'value1': removeDotFromEnd(setPV[1]),
+                'value2': removeDotFromEnd(setPV2[1]),
+                'value3': removeDotFromEnd(setPV3[1]),
+                'value4': removeDotFromEnd(setPV4[1]),
                 'value5': "##TODO"
                 }
         elif x == 5:
@@ -259,11 +259,11 @@ def mx(record):
                 'priority3': setPV3[0],
                 'priority4': setPV4[0],
                 'priority5': setPV5[0],
-                'value1': setPV[1],
-                'value2': setPV2[1],
-                'value3': setPV3[1],
-                'value4': setPV4[1],
-                'value5': setPV5[1]
+                'value1': removeDotFromEnd(setPV[1]),
+                'value2': removeDotFromEnd(setPV2[1]),
+                'value3': removeDotFromEnd(setPV3[1]),
+                'value4': removeDotFromEnd(setPV4[1]),
+                'value5': removeDotFromEnd(setPV5[1])
                 }
         return True
     return False
@@ -283,11 +283,237 @@ def txt(record):
         # Silently ignore TXT records with empty string values as not supported by CloudFlare
         if not value:
             return True
-        resources['TXT'][resource] = {
-            'name': recordName,
-            'ttl': 1,
-            'value': value
-        }
+        if (len(record['ResourceRecords'])) == 1:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': "##TODO",
+               'value3': "##TODO",
+                'value4': "##TODO",
+                'value5': "##TODO",
+                'value6': "##TODO",
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 2:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': "##TODO",
+                'value4': "##TODO",
+                'value5': "##TODO",
+                'value6': "##TODO",
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 3:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': "##TODO",
+                'value5': "##TODO",
+                'value6': "##TODO",
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 4:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': "##TODO",
+                'value6': "##TODO",
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 5:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': "##TODO",
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 6:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': "##TODO",
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 7:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': value7,
+                'value8': "##TODO",
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 8:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': value7,
+                'value8': value8,
+                'value9': "##TODO",
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 9:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
+            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': value7,
+                'value8': value8,
+                'value9': value9,
+                'value10': "##TODO"
+            }
+        elif (len(record['ResourceRecords'])) == 10:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
+            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
+            value10 = record['ResourceRecords'][9]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': value7,
+                'value8': value8,
+                'value9': value9,
+                'value10': value10
+            }
+
+        elif (len(record['ResourceRecords'])) > 10:
+            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
+            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
+            value10 = record['ResourceRecords'][9]['Value'].replace('"', '')
+            resources['TXT'][resource] = {
+                'name': recordName,
+                'ttl': 1,
+                'value1': value1,
+                'value2': value2,
+                'value3': value3,
+                'value4': value4,
+                'value5': value5,
+                'value6': value6,
+                'value7': value7,
+                'value8': value8,
+                'value9': value9,
+                'value10': "##TODO_MORE_THAN_10_VALUES"
+            }
         return True
     return False
 
@@ -528,6 +754,8 @@ def main():
             # terraform fmt check
             os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+' && terraform fmt && cd -')
 
+            # change premissions:
+            os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+'/error && chmod +x *.sh && cd -')
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
