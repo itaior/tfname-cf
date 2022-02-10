@@ -738,9 +738,6 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
     # nslookup                
     for item in resources:
-        # remove zone name from dictinary
-        if  resources[item].get(zone['Name'].replace('.', '_')):
-            resources[item].pop(zone['Name'].replace('.', '_'))
         # create file only for the necessary records
         if not len(resources[item]) == 0:
             template = env.get_template('nslookup{}.sh.j2'.format(item))
