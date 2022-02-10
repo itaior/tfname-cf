@@ -13,7 +13,7 @@ for val in "${StringArray[@]}"; do
   # nslookup cloudflare server
   nslookup -type=MX $val {{ cloudflare_ns_record }} | grep "mail exchanger" > "validateMX/${val}_RecordInCloudflare.txt"
   # nslookup general DNS servers
-  nslookup -type=MX $val | grep "mail exchanger" > "validateMX/${val}_RecordInCurrentDNS.txt"
+  nslookup -type=MX $val 8.8.8.8 | grep "mail exchanger" > "validateMX/${val}_RecordInCurrentDNS.txt"
   # sort output to compare multi-value
   sort ./validateMX/${val}_RecordInCloudflare.txt -o ./validateMX/${val}_RecordInCloudflare.txt
   sort ./validateMX/${val}_RecordInCurrentDNS.txt -o ./validateMX/${val}_RecordInCurrentDNS.txt
