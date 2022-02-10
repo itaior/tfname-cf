@@ -747,6 +747,18 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/error/nslookup{}.sh'.format(item), 'a') as target:
                 target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
+            # Read in the file
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'r') as file :
+                filedata = file.read()
+
+            # Replace the target string
+            # replace duplicate parent domain name in nslookup file
+            # for example: facebook.com.facebook.com -> facebook.com
+            filedata = filedata.replace(f"{zone['Name'][0:-1]}.{zone['Name'][0:-1]}", f"{zone['Name'][0:-1]}")
+
+            # Write the file out again
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'w') as file:
+                file.write(filedata)
 
 def main():
     # get input parameters
