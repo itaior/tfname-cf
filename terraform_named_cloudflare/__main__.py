@@ -160,7 +160,7 @@ def mx(zoneName, record):
         if x == 1:
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
-
+            ##TODO set folders for templates
             template = ENV.get_template('MX.tf.j2')
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
                 target.write(template.render(name=recordName, ttl=1, 
@@ -228,6 +228,8 @@ def mx(zoneName, record):
                 terrafromResource=resource, zone_id=zoneName))
         return True
     return False
+
+##TODO set import for TXT MX NS
 
 # addes resources to resources['TXT'] 
 def txt(zoneName, record):
@@ -572,19 +574,15 @@ def parse_zone(zone, rs):
 # render for all files
 def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    # # variables.tf
-    # template = env.get_template('variables.tf.j2')
-    # with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/variables.tf', 'w') as target:
-    #     target.write(template.render(cloudflare_zone_name=zoneName))
 
     # main.tf
     template = env.get_template('main.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
         target.write(template.render(account_id=account_id, zoneName=zoneName))
 
-    # cloudflareZone.tf
+    # Zone.tf
     # cloudflare_zone_name=zoneName - replacing the _ with .
-    template = env.get_template('cloudflareZone.tf.j2')
+    template = env.get_template('Zone.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name=zoneName.replace('_', '.')))
 
@@ -648,6 +646,18 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'a') as target:
                 target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
+            # Read in the file
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'r') as file :
+                filedata = file.read()
+
+            # Replace the target string
+            # replace duplicate parent domain name in nslookup file
+            # for example: facebook.com.facebook.com -> facebook.com
+            filedata = filedata.replace(f"{zone['Name'][0:-1]}.{zone['Name'][0:-1]}", f"{zone['Name'][0:-1]}")
+
+            # Write the file out again
+            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'w') as file:
+                file.write(filedata)
 
 def main():
     # get input parameters
@@ -697,13 +707,6 @@ def main():
             # change premissions:
             os.system('cd ./'+AWS_ACCOUNTID+'/'+zoneName+'/validateRecords && chmod +x *.sh && cd -')
 
-            # remove double parent name from nslookp files
-            ##TODO for loop that goes to each sh file and rewrite the double domain name
-            with open("/etc/apt/sources.list", "r") as sources:
-                lines = sources.readlines()
-            with open("/etc/apt/sources.list", "w") as sources:
-                for line in lines:
-                    sources.write(re.sub(r'^# deb', 'deb', line))
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
