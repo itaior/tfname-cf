@@ -7,7 +7,7 @@ import re
 import boto3
 import os
 
-AWS_ACCOUNTID="3716"
+AWS_ACCOUNTID="9037_TXTCount"
 
 # the resources dict will look like:
 # resources = {
@@ -316,6 +316,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 2_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 3:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -334,6 +338,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 3_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 4:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -353,6 +361,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 4_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 5:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -373,6 +385,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 5_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 6:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -394,6 +410,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 6_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 7:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -416,6 +436,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 7_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 8:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -439,6 +463,10 @@ def txt(record):
                 'value9': "##TODO",
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 8_TXT \n")
+
         elif (len(record['ResourceRecords'])) == 9:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -463,6 +491,10 @@ def txt(record):
                 'value9': value9,
                 'value10': "##TODO"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 9_TXT \n")
+                
         elif (len(record['ResourceRecords'])) == 10:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -489,6 +521,9 @@ def txt(record):
                 'value10': value10
             }
 
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 10_TXT \n")
+
         elif (len(record['ResourceRecords'])) > 10:
             value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
             value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
@@ -514,6 +549,10 @@ def txt(record):
                 'value9': value9,
                 'value10': "##TODO_MORE_THAN_10_VALUES"
             }
+
+            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
+                target.write(f"{resource} {recordName} 10+_TXT \n")
+
         return True
     return False
 
