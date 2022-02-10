@@ -11,7 +11,7 @@ declare -a StringArray=( {%- for resource in resources -%} "{{ resources[resourc
  
 for val in "${StringArray[@]}"; do
   # nslookup cloudflare server
-  nslookup -type=TXT a$val {{ cloudflare_ns_record }} | grep text > "validateTXT/${val}_RecordInCloudflare.txt"
+  nslookup -type=TXT $val {{ cloudflare_ns_record }} | grep text > "validateTXT/${val}_RecordInCloudflare.txt"
   # nslookup general DNS servers
   nslookup -type=TXT $val 8.8.8.8 | grep text > "validateTXT/${val}_RecordInCurrentDNS.txt"
   # sort output
