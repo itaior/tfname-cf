@@ -35,6 +35,6 @@ setup(
     scripts=[
         'scripts/terraform-named-cloudflare'
     ],
-    url='https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare',
+    url='https://github.com/itaior/tfname-cf',
     version='0.0.2',
 )
