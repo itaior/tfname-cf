@@ -9,7 +9,7 @@ resource "cloudflare_record" "MX_{{ terrafromResource  }}_1" {
 
 resource "cloudflare_record" "MX_{{ terrafromResource }}_2" {
   name     = "{{ name }}"
-  ttl      = {{ ttl }}
+  ttl      = "{{ ttl }}"
   type     = "MX"
   priority = "{{ priority2 }}"
   value    = "{{ value2 }}"

@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
+##TODO set imports for TXT MX NS
+##TODO jinja templates to spesific folders
+
 import argparse
 from threading import activeCount
 import jinja2
 import re
 import boto3
 import os
-import subprocess
 
 globals
 AWS_ACCOUNTID="1111"
-ENV = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
 
 # used to count records that were created
 resources = {
@@ -18,10 +19,10 @@ resources = {
     'AAAA': {},
     'CNAME': {},
     'MX': {},
-    'SRV': {},
+    'NS': {},
     'SPF': {},
+    'SRV': {},
     'TXT': {},
-    'NS': {}
 }
 
 def set_ZoneName(zone):
@@ -76,6 +77,60 @@ def removeDotFromEnd(value):
         value=value[0:-1]
     return value
 
+def set_TXTValue(inpurt_value):
+    value = inpurt_value.replace('"', '')
+    if re.match(r'.*DKIM', value):
+        value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
+    return value
+
+def render_single_value_records(temp_path, zoneName, recordName, ttl, value, resource):
+    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    template = env.get_template(f'{temp_path}.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/{temp_path}.tf', 'a') as target:
+        target.write(template.render(name=recordName, ttl=ttl, value=value, 
+        terrafromResource=resource, zone_id=zoneName))
+
+def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
+    value1, praiority1, value2="", praiority2="", value3="", praiority3="", 
+    value4="", praiority4="", value5="", praiority5=""):
+    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    template = env.get_template(f'{temp_path}.tf.j2')
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
+        target.write(template.render(name=recordName, ttl=ttl, 
+                value1=value1, priority1=praiority1, 
+                value2=value2, priority2=praiority2,
+                value3=value3, priority3=praiority3,
+                value4=value4, priority4=praiority4,
+                value5=value5, priority5=praiority5,
+                terrafromResource=resource, zone_id=zoneName)) 
+
+def render_NS_records(temp_path, zoneName, recordName, ttl, resource, 
+    value1, value2="", value3="", value4=""):
+
+    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    template = env.get_template(f'{temp_path}.tf.j2')
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
+        target.write(template.render(name=recordName, ttl=ttl, 
+        value1=value1, value2=value2, value3=value3,
+        value4=value4,
+        terrafromResource=resource, zone_id=zoneName)) 
+
+def render_TXT_records(temp_path, zoneName, recordName, ttl, resource,
+    value1, value2="", value3="", 
+    value4="", value5="", value6="", 
+    value7="", value8="", value9="", 
+    value10=""):
+
+    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    template = env.get_template(f'{temp_path}.tf.j2')
+    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
+        target.write(template.render(name=recordName, ttl=ttl, 
+        value1=value1, value2=value2, value3=value3,
+        value4=value4, value5=value5, value6=value6,
+        value7=value7, value8=value8, value9=value9,
+        value10=value10,
+        terrafromResource=resource, zone_id=zoneName)) 
+
 # addes resources to resources['A'] 
 def a(zoneName, record):
     # match = re.match(A, record)
@@ -85,19 +140,17 @@ def a(zoneName, record):
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
         if 'ResourceRecords' in record:
+            # add to A record dictinary
             resources['A'][resource] = { 'name': recordName }
-            template = ENV.get_template('A.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/A.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
-                terrafromResource=resource, zone_id=zoneName))
+
+            render_single_value_records("A", zoneName, recordName, 1, 
+                removeDotFromEnd(record['ResourceRecords'][0]['Value']), resource)
         elif 'AliasTarget' in record:
+            # add to CNAME record dictinary
             resources['CNAME'][resource] = { 'name': recordName }
-            template = ENV.get_template('CNAME.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/CNAME.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['AliasTarget']['DNSName']), 
-                terrafromResource=resource, zone_id=zoneName))   
+
+            render_single_value_records("CNAME", zoneName, recordName, 1, 
+                removeDotFromEnd(record['AliasTarget']['DNSName']), resource)   
         return True
     return False
 
@@ -108,20 +161,15 @@ def aaaa(zoneName, record):
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
         if 'ResourceRecords' in  record:
-            resources['AAAA'][resource] = { 'name': recordName }
-            ##TODO create function for writing records                  
-            template = ENV.get_template('AAAA.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/AAAA.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
-                terrafromResource=resource, zone_id=zoneName))
+            # add to AAAA record dictinary
+            resources['AAAA'][resource] = { 'name': recordName }                 
+            render_single_value_records("AAAA", zoneName, recordName, 1, 
+                removeDotFromEnd(record['ResourceRecords'][0]['Value']), resource)
         elif 'AliasTarget' in record:
+            # add to CNAME record dictinary
             resources['CNAME'][resource] = { 'name': recordName }
-            template = ENV.get_template('CNAME.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/CNAME.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['AliasTarget']['DNSName']), 
-                terrafromResource=resource, zone_id=zoneName)) 
+            render_single_value_records("CNAME", zoneName, recordName, 1, 
+                removeDotFromEnd(record['AliasTarget']['DNSName']), resource) 
         return True
     return False
 
@@ -132,19 +180,14 @@ def cname(zoneName, record):
     if match:
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
+        # add to CNAME record dictinary
         resources['CNAME'][resource] = { 'name': recordName }  
         if 'ResourceRecords' in  record:   
-            template = ENV.get_template('CNAME.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/CNAME.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
-                terrafromResource=resource, zone_id=zoneName))
+            render_single_value_records("CNAME", zoneName, recordName, 1, 
+                removeDotFromEnd(record['ResourceRecords'][0]['Value']), resource)
         elif 'AliasTarget' in record:
-            template = ENV.get_template('CNAME.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/CNAME.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value=removeDotFromEnd(record['AliasTarget']['DNSName']), 
-                terrafromResource=resource, zone_id=zoneName))  
+            render_single_value_records("CNAME", zoneName, recordName, 1, 
+                removeDotFromEnd(record['AliasTarget']['DNSName']), resource)
         return True
     return False
 
@@ -160,24 +203,18 @@ def mx(zoneName, record):
         if x == 1:
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
-            ##TODO set folders for templates
-            template = ENV.get_template('MX.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(setPV[1]), priority1=setPV[0], 
-                terrafromResource=resource, zone_id=zoneName)) 
+            
+            render_MX_records("MX", zoneName, recordName, 1, resource, 
+                removeDotFromEnd(setPV[1]), setPV[0])
 
         elif x == 2:
             # get priority and value
             setPV = record['ResourceRecords'][0]['Value'].split()
             setPV2 = record['ResourceRecords'][1]['Value'].split()  
 
-            template = ENV.get_template('MX2.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(setPV[1]), priority1=setPV[0], 
-                value2=removeDotFromEnd(setPV2[1]), priority2=setPV2[0], 
-                terrafromResource=resource, zone_id=zoneName)) 
+            render_MX_records("MX2", zoneName, recordName, 1, resource, 
+                removeDotFromEnd(setPV[1]), setPV[0],
+                removeDotFromEnd(setPV2[1]), setPV2[0])
 
         elif x == 3:
             # get priority and value
@@ -185,13 +222,10 @@ def mx(zoneName, record):
             setPV2 = record['ResourceRecords'][1]['Value'].split()
             setPV3 = record['ResourceRecords'][2]['Value'].split() 
 
-            template = ENV.get_template('MX3.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(setPV[1]), priority1=setPV[0], 
-                value2=removeDotFromEnd(setPV2[1]), priority2=setPV2[0], 
-                value3=removeDotFromEnd(setPV3[1]), priority3= setPV3[0],
-                terrafromResource=resource, zone_id=zoneName))
+            render_MX_records("MX3", zoneName, recordName, 1, resource, 
+                removeDotFromEnd(setPV[1]), setPV[0],
+                removeDotFromEnd(setPV2[1]), setPV2[0], 
+                removeDotFromEnd(setPV3[1]), setPV3[0])
 
         elif x == 4:
             # get priority and value
@@ -200,14 +234,11 @@ def mx(zoneName, record):
             setPV3 = record['ResourceRecords'][2]['Value'].split()
             setPV4 = record['ResourceRecords'][3]['Value'].split()
 
-            template = ENV.get_template('MX4.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(setPV[1]), priority1=setPV[0], 
-                value2=removeDotFromEnd(setPV2[1]), priority2=setPV2[0], 
-                value3=removeDotFromEnd(setPV3[1]), priority3= setPV3[0], 
-                value4=removeDotFromEnd(setPV4[1]), priority4=setPV4[0], 
-                terrafromResource=resource, zone_id=zoneName))
+            render_MX_records("MX4", zoneName, recordName, 1, resource, 
+                removeDotFromEnd(setPV[1]), setPV[0],
+                removeDotFromEnd(setPV2[1]), setPV2[0], 
+                removeDotFromEnd(setPV3[1]), setPV3[0],
+                removeDotFromEnd(setPV4[1]), setPV4[0])
 
         elif x == 5:
             # get priority and value
@@ -217,19 +248,16 @@ def mx(zoneName, record):
             setPV4 = record['ResourceRecords'][3]['Value'].split()
             setPV5 = record['ResourceRecords'][4]['Value'].split()
 
-            template = ENV.get_template('MX5.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(setPV[1]), priority1=setPV[0], 
-                value2=removeDotFromEnd(setPV2[1]), priority2=setPV2[0], 
-                value3=removeDotFromEnd(setPV3[1]), priority3= setPV3[0], 
-                value4=removeDotFromEnd(setPV4[1]), priority4=setPV4[0], 
-                value5= removeDotFromEnd(setPV5[1]), priority5=setPV5[0], 
-                terrafromResource=resource, zone_id=zoneName))
+            render_MX_records("MX5", zoneName, recordName, 1, resource, 
+                removeDotFromEnd(setPV[1]), setPV[0],
+                removeDotFromEnd(setPV2[1]), setPV2[0], 
+                removeDotFromEnd(setPV3[1]), setPV3[0],
+                removeDotFromEnd(setPV4[1]), setPV4[0],
+                removeDotFromEnd(setPV5[1]), setPV5[0])
         return True
     return False
 
-##TODO set import for TXT MX NS
+
 
 # addes resources to resources['TXT'] 
 def txt(zoneName, record):
@@ -240,203 +268,157 @@ def txt(zoneName, record):
         recordName = set_RecordName(record['Name'])
         resources['TXT'][resource] = { 'name': recordName } 
 
-        value = record['ResourceRecords'][0]['Value'].replace('"', '')
-        if re.match(r'.*DKIM', value):
-            value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
-
-        # Silently ignore TXT records with empty string values as not supported by CloudFlare
-        if not value:
-            return True
         if (len(record['ResourceRecords'])) == 1:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, value1=value1, 
-                terrafromResource=resource, zone_id=zoneName)) 
+            render_TXT_records("TXT", zoneName, recordName, 1, resource,
+                value1=value1)
 
         elif (len(record['ResourceRecords'])) == 2:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT2.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=value1, value2=value2, 
-                terrafromResource=resource, zone_id=zoneName)) 
-
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 2_TXT \n")
+            render_TXT_records("TXT2", zoneName, recordName, 1, resource,
+                value1=value1, value2=value2)
 
         elif (len(record['ResourceRecords'])) == 3:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT3.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=value1, value2=value2, value3=value3, 
-                terrafromResource=resource, zone_id=zoneName))
-
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 3_TXT \n")
+            render_TXT_records("TXT3", zoneName, recordName, 1, resource,
+                value1=value1, value2=value2, value3=value3)
 
         elif (len(record['ResourceRecords'])) == 4:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT4.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_TXT_records("TXT4", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
-                value4=value4, terrafromResource=resource, 
-                zone_id=zoneName))
-
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 4_TXT \n")
+                value4=value4)
 
         elif (len(record['ResourceRecords'])) == 5:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT5.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_TXT_records("TXT5", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
-                value4=value4, value5=value5, terrafromResource=resource, 
-                zone_id=zoneName))
+                value4=value4, value5=value5)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 5_TXT \n")
 
         elif (len(record['ResourceRecords'])) == 6:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT6.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_TXT_records("TXT6", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
-                value4=value4, value5=value5, value6=value6, 
-                terrafromResource=resource, zone_id=zoneName))
+                value4=value4, value5=value5, value6=value6)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 6_TXT \n")
 
         elif (len(record['ResourceRecords'])) == 7:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
-            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
+            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT7.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, 
-                ttl=1, value1=value1, value2=value2, value3=value3, 
+            render_TXT_records("TXT7", zoneName, recordName, 1, resource,
+                value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
-                value7=value7, terrafromResource=resource, zone_id=zoneName))
+                value7=value7)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 7_TXT \n")
 
         elif (len(record['ResourceRecords'])) == 8:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
-            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
-            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
+            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
+            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
 
-            template = ENV.get_template('TXT8.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_TXT_records("TXT8", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
-                value7=value7, value8=value8, 
-                terrafromResource=resource, zone_id=zoneName))
+                value7=value7, value8=value8)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 8_TXT \n")
 
         elif (len(record['ResourceRecords'])) == 9:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
-            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
-            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
-            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
-
-            template = ENV.get_template('TXT9.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
+            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
+            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
+            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
+            
+            render_TXT_records("TXT9", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
-                value7=value7, value8=value8, value9=value9, 
-                terrafromResource=resource, zone_id=zoneName))
+                value7=value7, value8=value8, value9=value9)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 9_TXT \n")
                 
         elif (len(record['ResourceRecords'])) == 10:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
-            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
-            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
-            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
+            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
+            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
+            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
             value10 = record['ResourceRecords'][9]['Value'].replace('"', '')
 
-            template = ENV.get_template('TXT10.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_TXT_records("TXT10", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
-                value7=value7, value8=value8, value9=value9, value10=value10, 
-                terrafromResource=resource, zone_id=zoneName))
+                value7=value7, value8=value8, value9=value9, 
+                value10=value10)
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 10_TXT \n")
 
         elif (len(record['ResourceRecords'])) > 10:
-            value1 = record['ResourceRecords'][0]['Value'].replace('"', '')
-            value2 = record['ResourceRecords'][1]['Value'].replace('"', '')
-            value3 = record['ResourceRecords'][2]['Value'].replace('"', '')
-            value4 = record['ResourceRecords'][3]['Value'].replace('"', '')
-            value5 = record['ResourceRecords'][4]['Value'].replace('"', '')
-            value6 = record['ResourceRecords'][5]['Value'].replace('"', '')
-            value7 = record['ResourceRecords'][6]['Value'].replace('"', '')
-            value8 = record['ResourceRecords'][7]['Value'].replace('"', '')
-            value9 = record['ResourceRecords'][8]['Value'].replace('"', '')
-
-            template = ENV.get_template('TXT10.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
+            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
+            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
+            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
+            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
+            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
+            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
+            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
+            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
+            
+            render_TXT_records("TXT10", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
                 value7=value7, value8=value8, value9=value9, 
-                value10="##TODO_MORE_THAN_10_VALUES", 
-                terrafromResource=resource, zone_id=zoneName))
+                value10="##TODO_MORE_THAN_10_VALUES")
 
             with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
                 target.write(f"{resource} {recordName} 10+_TXT \n")
@@ -457,45 +439,33 @@ def ns(zoneName, record):
         x = int(len(record['ResourceRecords']))
         if x == 1:
             resources['NS'][resource] = {'name': recordName}
-
-            template = ENV.get_template('NS.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
-                value1=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
-                terrafromResource=resource, zone_id=zoneName)) 
+            
+            render_NS_records("NS", zoneName, recordName, 1, resource,
+                value1=removeDotFromEnd(record['ResourceRecords'][0]['Value']))
 
         elif x == 2:           
             resources['NS'][resource] = {'name': recordName}
 
-            template = ENV.get_template('NS2.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_NS_records("NS2", zoneName, recordName, 1, resource,
                 value1=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
-                value2=removeDotFromEnd(record['ResourceRecords'][1]['Value']), 
-                terrafromResource=resource, zone_id=zoneName))
+                value2=removeDotFromEnd(record['ResourceRecords'][1]['Value']))
         
         elif x == 3:           
             resources['NS'][resource] = {'name': recordName}
 
-            template = ENV.get_template('NS3.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_NS_records("NS3", zoneName, recordName, 1, resource,
                 value1=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
                 value2=removeDotFromEnd(record['ResourceRecords'][1]['Value']), 
-                value3=removeDotFromEnd(record['ResourceRecords'][2]['Value']),
-                terrafromResource=resource, zone_id=zoneName))
+                value3=removeDotFromEnd(record['ResourceRecords'][2]['Value']))
 
         elif x == 4:           
             resources['NS'][resource] = {'name': recordName}
 
-            template = ENV.get_template('NS3.tf.j2')
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
-                target.write(template.render(name=recordName, ttl=1, 
+            render_NS_records("NS3", zoneName, recordName, 1, resource,
                 value1=removeDotFromEnd(record['ResourceRecords'][0]['Value']), 
                 value2=removeDotFromEnd(record['ResourceRecords'][1]['Value']), 
                 value3=removeDotFromEnd(record['ResourceRecords'][2]['Value']),
-                value4=removeDotFromEnd(record['ResourceRecords'][3]['Value']), 
-                terrafromResource=resource, zone_id=zoneName))
+                value4=removeDotFromEnd(record['ResourceRecords'][3]['Value']))
                  
         return True
     return False
@@ -515,10 +485,7 @@ def spf(zoneName, record):
         recordName = set_RecordName(record['Name'])
         resources['SPF'][resource] = { 'name': recordName }  
 
-        template = ENV.get_template('SPF.tf.j2')
-        with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/SPF.tf', 'a') as target:
-            target.write(template.render(name=recordName, ttl=1, value=value, 
-            terrafromResource=resource, zone_id=zoneName)) 
+        render_single_value_records("SPF", zoneName, recordName, 1, value, resource)
 
         return True
     return False
@@ -642,12 +609,14 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         # create file only for the necessary records
         if not len(resources[item]) == 0:
-            template = env.get_template('nslookup{}.sh.j2'.format(item))
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'a') as target:
-                target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), cloudflare_ns_record=cloudflare_ns_record, space=" "))
+            env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+            template = env.get_template(f'nslookup{item}.sh.j2')
+            with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'a') as target:
+                target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), 
+                cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
             # Read in the file
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'r') as file :
+            with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'r') as file :
                 filedata = file.read()
 
             # Replace the target string
@@ -656,8 +625,23 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             filedata = filedata.replace(f"{zone['Name'][0:-1]}.{zone['Name'][0:-1]}", f"{zone['Name'][0:-1]}")
 
             # Write the file out again
-            with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/validateRecords/nslookup{}.sh'.format(item), 'w') as file:
+            with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'w') as file:
                 file.write(filedata)
+    
+    # this loop will right the records to one file orderd by record type 
+    for item in resources:
+        # create file only for the necessary records
+        if not len(resources[item]) == 0:
+            # Read in the file
+            with open(f'./{AWS_ACCOUNTID}/{zoneName}/{item}.tf', 'r') as file :
+                filedata = file.read()
+            
+            # Write the file out again
+            with open(f"./{AWS_ACCOUNTID}/{zoneName}/records.tf", 'a') as file:
+                file.write(filedata)
+            
+            # delete the records file
+            os.system(f'rm ./{AWS_ACCOUNTID}/{zoneName}/{item}.tf')
 
 def main():
     # get input parameters
@@ -695,10 +679,10 @@ def main():
             else:
                 os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/validateRecords")
             
-            # parsing through the records list
+            # parsing through the records list and write records to 'record_type.tf'
             parse_zone(zone, rs)
 
-            # writing to files
+            # validation files, zone file, main file
             render(zone, rs, zoneName, account_id, cloudflare_ns_record)
 
             # terraform fmt check
@@ -710,6 +694,7 @@ def main():
             # empty resources dict for new zone
             for i in resources:
                 resources[i].clear()
+                
         # if it's a private zone - write the filtered zone name to file
         else:
             zoneName = set_ZoneName(zone)
