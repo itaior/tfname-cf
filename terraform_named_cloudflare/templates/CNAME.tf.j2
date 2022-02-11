@@ -1,10 +1,9 @@
-{%- for resource in resources -%}
-resource "cloudflare_record" "CNAME_{{ resource  }}" {
-  name    = "{{ resources[resource].name }}"
-  ttl     = "{{ resources[resource].ttl }}"
+resource "cloudflare_record" "CNAME_{{ terrafromResource  }}" {
+  name    = "{{ name }}"
+  ttl     = "{{ ttl }}"
   type    = "CNAME"
-  value   = "{{ resources[resource].value }}"
-  zone_id = cloudflare_zone.{{ terrafromResource  }}.id
+  value   = "{{ value }}"
+  zone_id = cloudflare_zone.{{ zone_id  }}.id
 }
 
-{% endfor -%}
+

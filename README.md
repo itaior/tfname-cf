@@ -4,13 +4,14 @@ https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare
 # terraform-named-cloudflare
 
 Our Python tool easily gets all the route53 zones and recods of spesific aws account 
-and parse them into Terraform cloudflare resources(zone, records).
+and parse them into Terraform cloudflare resources.
 
 In addition the tool will create tests to validate the new records in cloudflare 
 using nslookup.
 
 To make the result code organized, code separated based on DNS records types.
-If you would prefer to use one file for all of your records swith branch to oneTF
+If you would prefer to use one file for all of your records swith branch to oneTF,
+where the records will be orderd by type.
 
 ## Installation
 
@@ -50,8 +51,6 @@ There are some edge cases that might be missed.
 In order to over come those cases we created a summry file, named 'countRecords.txt', that will compare the records
 that were templated as terraform cloudflare resources with the actual records in the aws route53 zone.
 
-Search "##TODO" for MX records that had less than 5 values and remove those resources.
-
 For example:
 ```
     A                   = "108"
@@ -62,7 +61,7 @@ For example:
     TXT                 = "4"
     NS                  = "0"
   -------------------------------------------------
-  total records Created = "126"
+  total records Created = "127"
     
   total recrds in AWS   = "129"
   -------------------------------------------------
@@ -75,10 +74,17 @@ For example:
     NS                  = "1"
 ```
 
-In this case we can see that the tool missed one edge case of MX record and there for we should check this case in the our
-aws zone. 
-Becuase we exclude the top NS record and the SOA record a deficit of 2 record means that all records were 
-parased and were added to the Terraform files.
+Becuase we exclude the top level NS record and the SOA, a deficit of 2 record means that all records were 
+parased and created as terraform resources.
+
+## Validation
+There are some edge cases that might be missed, when creating the records.
+That is why we compare the records that were created in your accout cloudflare 
+to the value of the current known records in the global DNS server.
+
+curently SPF validation is not complete.
+
+**We always recommend a human validation as well**
 
 ## Supported DNS records types
 

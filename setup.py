@@ -12,17 +12,17 @@ def requirements():
 
 
 setup(
-    author='Andrew Poltavchenko',
-    author_email='pa@yourserveradmin.com',
+    author='Guy Saar',
+    author_email='guy.saar@tikalk.com',
     classifiers=[
         'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        "Operating System :: OS Independent",
+        "Operating System :: Linux Based OS",
         'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
-    description='Module to easily convert Bind9 (named) zones into Terraform CloudFlare provider records definitions',
+    description='Module to easily convert Route53 zones into Terraform CloudFlare provider records definitions',
     include_package_data=True,
     install_requires=requirements(),
     license='MIT',
@@ -35,6 +35,6 @@ setup(
     scripts=[
         'scripts/terraform-named-cloudflare'
     ],
-    url='https://github.com/pa-yourserveradmin-com/terraform-named-cloudflare',
+    url='https://github.com/itaior/tfname-cf',
     version='0.0.2',
 )
