@@ -8,11 +8,12 @@ import jinja2
 import re
 import boto3
 import os
-import setTXT
-import setMX
+from modules.MX import set_MX_value
+from modules.TXT import fix_TXT_Value, set_TXT_value
 
 globals
 AWS_ACCOUNTID="1111"
+ENV = jinja2.Environment(loader=jinja2.PackageLoader('route53_to_cloudflare', 'templates'))
 
 # used to count records that were created
 resources = {
@@ -79,8 +80,8 @@ def removeDotFromEnd(value):
     return value
 
 def render_single_value_records(temp_path, zoneName, recordName, ttl, value, resource):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
     with open(f'./{AWS_ACCOUNTID}/{zoneName}/{temp_path}.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, value=value, 
         terrafromResource=resource, zone_id=zoneName))
@@ -88,8 +89,8 @@ def render_single_value_records(temp_path, zoneName, recordName, ttl, value, res
 def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
     value1, praiority1, value2="", praiority2="", value3="", praiority3="", 
     value4="", praiority4="", value5="", praiority5=""):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
                 value1=value1, priority1=praiority1, 
@@ -102,8 +103,8 @@ def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
 def render_NS_records(temp_path, zoneName, recordName, ttl, resource, 
     value1, value2="", value3="", value4=""):
 
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
@@ -116,8 +117,8 @@ def render_TXT_records(temp_path, zoneName, recordName, ttl, resource,
     value7="", value8="", value9="", 
     value10=""):
 
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
@@ -195,7 +196,7 @@ def mx(zoneName, record):
         recordName = set_RecordName(record['Name'])
         resources['MX'][resource] = { 'name': recordName } 
         # set priority and value
-        setPV, setPV2, setPV3, setPV4, setPV5 = setMX.set_MX_value(record['ResourceRecords'])
+        setPV, setPV2, setPV3, setPV4, setPV5 = set_MX_value(record['ResourceRecords'])
 
         x = int(len(record['ResourceRecords']))
         if x == 1:
@@ -241,7 +242,7 @@ def txt(zoneName, record):
         recordName = set_RecordName(record['Name'])
         resources['TXT'][resource] = { 'name': recordName }
         # set TXT value 
-        value1, value2, value3, value4, value5, value6,value7, value8, value9, value10 = setTXT.set_TXT_value(record['ResourceRecords'])
+        value1, value2, value3, value4, value5, value6,value7, value8, value9, value10 = set_TXT_value(record['ResourceRecords'])
 
         if (len(record['ResourceRecords'])) == 1:
 
@@ -368,7 +369,7 @@ def spf(zoneName, record):
     if match:
         
         # fix replace '"' with ''  and fix DKIM value
-        value = setTXT.fix_TXT_Value(record['ResourceRecords'][0]['Value'])
+        value = fix_TXT_Value(record['ResourceRecords'][0]['Value'])
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
         resources['SPF'][resource] = { 'name': recordName }  
@@ -428,16 +429,16 @@ def parse_zone(zone, rs):
 
 # render for all files
 def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    
 
     # main.tf
-    template = env.get_template('main.tf.j2')
+    template = ENV.get_template('main.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
         target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # Zone.tf
     # cloudflare_zone_name=zoneName - replacing the _ with .
-    template = env.get_template('Zone.tf.j2')
+    template = ENV.get_template('Zone.tf.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name=zoneName.replace('_', '.')))
 
@@ -477,7 +478,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         elif i['Type'] == 'SPF':
             awsSPFrecord += 1
 
-    template = env.get_template('countRecords.txt.j2')
+    template = ENV.get_template('countRecords.txt.j2')
     with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
         target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,
         recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, 
@@ -497,8 +498,8 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         # create file only for the necessary records
         if not len(resources[item]) == 0:
-            env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-            template = env.get_template(f'nslookup{item}.sh.j2')
+            
+            template = ENV.get_template(f'nslookup{item}.sh.j2')
             with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'a') as target:
                 target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), 
                 cloudflare_ns_record=cloudflare_ns_record, space=" "))

@@ -36,5 +36,5 @@ setup(
         'scripts/route53-to-cloudflare'
     ],
     url='https://github.com/itaior/tfname-cf',
-    version='0.0.3',
+    version='0.0.2',
 )
