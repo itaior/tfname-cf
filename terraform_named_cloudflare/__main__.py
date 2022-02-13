@@ -641,7 +641,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
                 file.write(filedata)
             
             # delete the records file
-            os.system(f'rm ./{AWS_ACCOUNTID}/{zoneName}/{item}.tf')
+            os.remove(f'./{AWS_ACCOUNTID}/{zoneName}/{item}.tf')
 
 def main():
     # get input parameters
