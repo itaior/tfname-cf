@@ -33,8 +33,7 @@ export AWS_PROFILE=<PROFILE_NAME>
 route53-to-cloudflare -id <CLOUDFLARE_ACCOUNT_ID> -ns <CLOUDFLARE_NS_RECORDS> -awsID <AWS_ACCOUNT_ID>
 ```
 
-Since not all records need to be converted in Terraform code, the tool ignores
-some of them, for example we are excluding the top NS record and the SOA record.
+Since the tool ignores the top NS record and the SOA record.
 In the countRecord.txt we will see 2 records missing. (check Limitations)
 
 ## Requirements
@@ -46,8 +45,8 @@ modules listed in the [requirements.txt](requirements.txt) and automatically
 installed with module.
 
 ## Limitations
-Even though we tried to get as many as we could, there might be still be some edge cases that we missed.
-In order to over come those cases we created a summry file, named 'countRecords.txt', that will compare number of records
+Even though we tried to get catch as many edge cases as we could, there still might be some that we missed.
+In order to over come those cases we created a summry file, named 'countRecords.txt', that will compare the number of records
 that were templated as terraform cloudflare resources with the actual number records in the aws route53 zone.
 
 So we can see that we didn't miss any record.
@@ -80,7 +79,7 @@ parased and created as terraform resources.
 
 ## Validation
 As disscused before, there might be some edge cases that we missed.
-That is why we also created a validation script that compares the records value in cloudflare with the values of the 
+That is why we created a validation script that compares the records value in cloudflare with the values of the 
 current known records in the global DNS server.
 
 curently SPF validation is not complete.
