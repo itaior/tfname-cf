@@ -6,9 +6,9 @@ and parse them into Terraform cloudflare resources.
 In addition the tool will create tests to validate the new records in cloudflare 
 compared with the current global DNS records, using nslookup.
 
-To make the result code organized, code separated based on DNS records types.
-If you would prefer to use one file for all of your records swith branch to oneTF,
-where the records will be writen to one file and will be orderd by type.
+To make the result code organized, we separated the terraform files based on DNS records types (for example A.tf, CANME.tf).
+If you would prefer to use one terraform file swith branch to oneTF.
+oneTF - records will be writen to one file named records.tf. The records will be orderd by type.
 
 ## Installation
 
@@ -23,14 +23,14 @@ python3 setup.py install
 
 ## Usage
 
-* export the aws account 
+* export aws account 
 ```bash
 export AWS_PROFILE=<PROFILE_NAME>
 ```
 * cli command to run the tool
 
 ```bash
-route53-to-cloudflare -id <CLOUDFLARE_ACCOUNT_ID> -ns <CLOUDFLARE_NS_RECORDS>
+route53-to-cloudflare -id <CLOUDFLARE_ACCOUNT_ID> -ns <CLOUDFLARE_NS_RECORDS> -awsID <AWS_ACCOUNT_ID>
 ```
 
 Since not all records need to be converted in Terraform code, the tool ignores
