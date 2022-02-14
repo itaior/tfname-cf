@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import re
 
 # fix replace '"' with ''  and fix DKIM value

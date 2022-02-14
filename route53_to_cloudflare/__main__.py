@@ -8,11 +8,11 @@ import jinja2
 import re
 import boto3
 import os
-from modules.MX import set_MX_value
-from modules.TXT import fix_TXT_Value, set_TXT_value
+from .mod.MX import set_MX_value
+from .mod.TXT import fix_TXT_Value, set_TXT_value
 
 globals
-AWS_ACCOUNTID="1111"
+AWS_ACCOUNTID="8984"
 ENV = jinja2.Environment(loader=jinja2.PackageLoader('route53_to_cloudflare', 'templates'))
 
 # used to count records that were created
@@ -498,10 +498,19 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     for item in resources:
         # create file only for the necessary records
         if not len(resources[item]) == 0:
-            
+
+            parentDomain=zoneName.replace('_', '.')
+            #set parent domain name if subDomain has seperated Subzone
+            if int(len(zoneName.split("_"))) > 2:
+                parentDomainName = ""
+                for i in range(len(zoneName.split('_'))-2, len(zoneName.split('_'))):
+                    parentDomainName = parentDomainName +"."+ zoneName.split('_')[i]
+                    # remove the '.' from the start of the parent domain name
+                    parentDomain = parentDomainName[1:].replace('_', '.')
+                    
             template = ENV.get_template(f'nslookup{item}.sh.j2')
             with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'a') as target:
-                target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), 
+                target.write(template.render(resources=resources[item], parentDomain=parentDomain, 
                 cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
             # Read in the file
@@ -519,9 +528,9 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
 def main():
     # get input parameters
-    args = parse_arguments().parse_args()
-    account_id = args.account_id
-    cloudflare_ns_record = args.ns_record
+    # args = parse_arguments().parse_args()
+    account_id = 111
+    cloudflare_ns_record = 222
     
     # get zones list
     client = boto3.client('route53')
