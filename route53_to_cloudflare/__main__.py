@@ -91,7 +91,7 @@ def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
     value4="", praiority4="", value5="", praiority5=""):
     
     template = ENV.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/MX.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
                 value1=value1, priority1=praiority1, 
                 value2=value2, priority2=praiority2,
@@ -105,7 +105,7 @@ def render_NS_records(temp_path, zoneName, recordName, ttl, resource,
 
     
     template = ENV.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/NS.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
         value4=value4,
@@ -119,7 +119,7 @@ def render_TXT_records(temp_path, zoneName, recordName, ttl, resource,
 
     
     template = ENV.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/TXT.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
         value4=value4, value5=value5, value6=value6,
@@ -433,13 +433,13 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
     # main.tf
     template = ENV.get_template('main.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/main.tf', 'w') as target:
         target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # Zone.tf
     # cloudflare_zone_name=zoneName - replacing the _ with .
     template = ENV.get_template('Zone.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name=zoneName.replace('_', '.')))
 
     # countRecords.txt
@@ -479,7 +479,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             awsSPFrecord += 1
 
     template = ENV.get_template('countRecords.txt.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/countRecords.txt', 'w') as target:
         target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,
         recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, 
         recordNS=recordNS, awsArecord=awsArecord, awsAAAArecord=awsAAAArecord, awsMXrecord=awsMXrecord, 
@@ -488,10 +488,10 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     
     # 0 subzones
     if recordNS == 0 and len(zoneName.split('_')) == 2:
-        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_noSubZones.txt', 'a') as target:
+        with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_noSubZones.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
     else:
-        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
+        with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_zonesWithSubDomains.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
 
     # nslookup                
@@ -507,7 +507,7 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
                     parentDomainName = parentDomainName +"."+ zoneName.split('_')[i]
                     # remove the '.' from the start of the parent domain name
                     parentDomain = parentDomainName[1:].replace('_', '.')
-                    
+
             template = ENV.get_template(f'nslookup{item}.sh.j2')
             with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'a') as target:
                 target.write(template.render(resources=resources[item], parentDomain=parentDomain, 
@@ -525,6 +525,21 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
             # Write the file out again
             with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'w') as file:
                 file.write(filedata)
+    
+    # this loop will right the records to one file orderd by record type 
+    for item in resources:
+        # create file only for the necessary records
+        if not len(resources[item]) == 0:
+            # Read in the file
+            with open(f'./{AWS_ACCOUNTID}/{zoneName}/{item}.tf', 'r') as file :
+                filedata = file.read()
+            
+            # Write the file out again
+            with open(f"./{AWS_ACCOUNTID}/{zoneName}/records.tf", 'a') as file:
+                file.write(filedata)
+            
+            # delete the records file
+            os.remove(f'./{AWS_ACCOUNTID}/{zoneName}/{item}.tf')
 
 def main():
     # get input parameters
@@ -537,10 +552,10 @@ def main():
     hostedzone=client.list_hosted_zones()
 
     # check if folder exists
-    if os.path.exists("./"+AWS_ACCOUNTID):
+    if os.path.exists(f'./{AWS_ACCOUNTID}'):
         pass
     else:
-        os.mkdir("./"+AWS_ACCOUNTID)
+        os.mkdir(f'./{AWS_ACCOUNTID}')
     
     # filter out private domains
     for zone in hostedzone["HostedZones"]:
@@ -551,16 +566,16 @@ def main():
             # set zone name for folder name and resource name
             zoneName = set_ZoneName(zone)
             # check if folder exists
-            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
+            if os.path.exists(f'./{AWS_ACCOUNTID}/{zoneName}'):
                 pass
             else:
-                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName)
+                os.mkdir(f'./{AWS_ACCOUNTID}/{zoneName}')
 
             # check if folder exists
-            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName+"/validateRecords"):
+            if os.path.exists(f'./{AWS_ACCOUNTID}/{zoneName}'+"/validateRecords"):
                 pass
             else:
-                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/validateRecords")
+                os.mkdir(f'./{AWS_ACCOUNTID}/{zoneName}'+"/validateRecords")
             
             # parsing through the records list and write records to 'record_type.tf'
             parse_zone(zone, rs)
@@ -581,7 +596,7 @@ def main():
         # if it's a private zone - write the filtered zone name to file
         else:
             zoneName = set_ZoneName(zone)
-            with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_PrivateZoneFiltered.txt', 'a') as target:
+            with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_PrivateZoneFiltered.txt', 'a') as target:
                 target.write(zoneName.replace('_', '.') + "\n")
 
 
