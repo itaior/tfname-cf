@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-##TODO set imports for TXT MX NS
 ##TODO jinja templates to spesific folders
 
 import argparse
@@ -9,9 +8,12 @@ import jinja2
 import re
 import boto3
 import os
+from .mod.MX import set_MX_value
+from .mod.TXT import fix_TXT_Value, set_TXT_value
 
 globals
-AWS_ACCOUNTID="1111"
+AWS_ACCOUNTID="8984"
+ENV = jinja2.Environment(loader=jinja2.PackageLoader('route53_to_cloudflare', 'templates'))
 
 # used to count records that were created
 resources = {
@@ -77,15 +79,9 @@ def removeDotFromEnd(value):
         value=value[0:-1]
     return value
 
-def set_TXTValue(inpurt_value):
-    value = inpurt_value.replace('"', '')
-    if re.match(r'.*DKIM', value):
-        value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
-    return value
-
 def render_single_value_records(temp_path, zoneName, recordName, ttl, value, resource):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
     with open(f'./{AWS_ACCOUNTID}/{zoneName}/{temp_path}.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, value=value, 
         terrafromResource=resource, zone_id=zoneName))
@@ -93,9 +89,9 @@ def render_single_value_records(temp_path, zoneName, recordName, ttl, value, res
 def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
     value1, praiority1, value2="", praiority2="", value3="", praiority3="", 
     value4="", praiority4="", value5="", praiority5=""):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/MX.tf', 'a') as target:
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/MX.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
                 value1=value1, priority1=praiority1, 
                 value2=value2, priority2=praiority2,
@@ -107,9 +103,9 @@ def render_MX_records(temp_path, zoneName, recordName, ttl, resource,
 def render_NS_records(temp_path, zoneName, recordName, ttl, resource, 
     value1, value2="", value3="", value4=""):
 
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/NS.tf', 'a') as target:
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/NS.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
         value4=value4,
@@ -121,9 +117,9 @@ def render_TXT_records(temp_path, zoneName, recordName, ttl, resource,
     value7="", value8="", value9="", 
     value10=""):
 
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-    template = env.get_template(f'{temp_path}.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/TXT.tf', 'a') as target:
+    
+    template = ENV.get_template(f'{temp_path}.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/TXT.tf', 'a') as target:
         target.write(template.render(name=recordName, ttl=ttl, 
         value1=value1, value2=value2, value3=value3,
         value4=value4, value5=value5, value6=value6,
@@ -198,42 +194,27 @@ def mx(zoneName, record):
     if match:
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
-        resources['MX'][resource] = { 'name': recordName }  
+        resources['MX'][resource] = { 'name': recordName } 
+        # set priority and value
+        setPV, setPV2, setPV3, setPV4, setPV5 = set_MX_value(record['ResourceRecords'])
+
         x = int(len(record['ResourceRecords']))
         if x == 1:
-            # get priority and value
-            setPV = record['ResourceRecords'][0]['Value'].split()
-            
             render_MX_records("MX", zoneName, recordName, 1, resource, 
                 removeDotFromEnd(setPV[1]), setPV[0])
 
         elif x == 2:
-            # get priority and value
-            setPV = record['ResourceRecords'][0]['Value'].split()
-            setPV2 = record['ResourceRecords'][1]['Value'].split()  
-
             render_MX_records("MX2", zoneName, recordName, 1, resource, 
                 removeDotFromEnd(setPV[1]), setPV[0],
                 removeDotFromEnd(setPV2[1]), setPV2[0])
 
         elif x == 3:
-            # get priority and value
-            setPV = record['ResourceRecords'][0]['Value'].split()
-            setPV2 = record['ResourceRecords'][1]['Value'].split()
-            setPV3 = record['ResourceRecords'][2]['Value'].split() 
-
             render_MX_records("MX3", zoneName, recordName, 1, resource, 
                 removeDotFromEnd(setPV[1]), setPV[0],
                 removeDotFromEnd(setPV2[1]), setPV2[0], 
                 removeDotFromEnd(setPV3[1]), setPV3[0])
 
         elif x == 4:
-            # get priority and value
-            setPV = record['ResourceRecords'][0]['Value'].split()
-            setPV2 = record['ResourceRecords'][1]['Value'].split()
-            setPV3 = record['ResourceRecords'][2]['Value'].split()
-            setPV4 = record['ResourceRecords'][3]['Value'].split()
-
             render_MX_records("MX4", zoneName, recordName, 1, resource, 
                 removeDotFromEnd(setPV[1]), setPV[0],
                 removeDotFromEnd(setPV2[1]), setPV2[0], 
@@ -241,13 +222,6 @@ def mx(zoneName, record):
                 removeDotFromEnd(setPV4[1]), setPV4[0])
 
         elif x == 5:
-            # get priority and value
-            setPV = record['ResourceRecords'][0]['Value'].split()
-            setPV2 = record['ResourceRecords'][1]['Value'].split()
-            setPV3 = record['ResourceRecords'][2]['Value'].split()
-            setPV4 = record['ResourceRecords'][3]['Value'].split()
-            setPV5 = record['ResourceRecords'][4]['Value'].split()
-
             render_MX_records("MX5", zoneName, recordName, 1, resource, 
                 removeDotFromEnd(setPV[1]), setPV[0],
                 removeDotFromEnd(setPV2[1]), setPV2[0], 
@@ -266,133 +240,66 @@ def txt(zoneName, record):
     if match:
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
-        resources['TXT'][resource] = { 'name': recordName } 
+        resources['TXT'][resource] = { 'name': recordName }
+        # set TXT value 
+        value1, value2, value3, value4, value5, value6,value7, value8, value9, value10 = set_TXT_value(record['ResourceRecords'])
 
         if (len(record['ResourceRecords'])) == 1:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
 
             render_TXT_records("TXT", zoneName, recordName, 1, resource,
                 value1=value1)
 
         elif (len(record['ResourceRecords'])) == 2:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
 
             render_TXT_records("TXT2", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2)
 
         elif (len(record['ResourceRecords'])) == 3:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
 
             render_TXT_records("TXT3", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3)
 
         elif (len(record['ResourceRecords'])) == 4:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
 
             render_TXT_records("TXT4", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4)
 
         elif (len(record['ResourceRecords'])) == 5:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
 
             render_TXT_records("TXT5", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 5_TXT \n")
-
         elif (len(record['ResourceRecords'])) == 6:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
 
             render_TXT_records("TXT6", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 6_TXT \n")
-
         elif (len(record['ResourceRecords'])) == 7:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
-            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
 
             render_TXT_records("TXT7", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
                 value7=value7)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 7_TXT \n")
-
         elif (len(record['ResourceRecords'])) == 8:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
-            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
-            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
 
             render_TXT_records("TXT8", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
                 value7=value7, value8=value8)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 8_TXT \n")
 
         elif (len(record['ResourceRecords'])) == 9:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
-            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
-            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
-            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
             
             render_TXT_records("TXT9", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
                 value7=value7, value8=value8, value9=value9)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 9_TXT \n")
-                
         elif (len(record['ResourceRecords'])) == 10:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
-            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
-            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
-            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
-            value10 = record['ResourceRecords'][9]['Value'].replace('"', '')
 
             render_TXT_records("TXT10", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
@@ -400,29 +307,13 @@ def txt(zoneName, record):
                 value7=value7, value8=value8, value9=value9, 
                 value10=value10)
 
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 10_TXT \n")
-
         elif (len(record['ResourceRecords'])) > 10:
-            value1 = set_TXTValue(record['ResourceRecords'][0]['Value'].replace('"', ''))
-            value2 = set_TXTValue(record['ResourceRecords'][1]['Value'].replace('"', ''))
-            value3 = set_TXTValue(record['ResourceRecords'][2]['Value'].replace('"', ''))
-            value4 = set_TXTValue(record['ResourceRecords'][3]['Value'].replace('"', ''))
-            value5 = set_TXTValue(record['ResourceRecords'][4]['Value'].replace('"', ''))
-            value6 = set_TXTValue(record['ResourceRecords'][5]['Value'].replace('"', ''))
-            value7 = set_TXTValue(record['ResourceRecords'][6]['Value'].replace('"', ''))
-            value8 = set_TXTValue(record['ResourceRecords'][7]['Value'].replace('"', ''))
-            value9 = set_TXTValue(record['ResourceRecords'][8]['Value'].replace('"', ''))
             
             render_TXT_records("TXT10", zoneName, recordName, 1, resource,
                 value1=value1, value2=value2, value3=value3, 
                 value4=value4, value5=value5, value6=value6, 
                 value7=value7, value8=value8, value9=value9, 
                 value10="##TODO_MORE_THAN_10_VALUES")
-
-            with open("./"+AWS_ACCOUNTID+'/TXTcount.txt', 'a') as target:
-                target.write(f"{resource} {recordName} 10+_TXT \n")
-
         return True
     return False
 
@@ -477,10 +368,8 @@ def spf(zoneName, record):
     match = (record['Type'] == 'SPF')
     if match:
         
-        value = record['ResourceRecords'][0]['Value'].replace('"', '')
-        if re.match(r'.*DKIM', value):
-            value = '; '.join(re.sub(pattern=r'\s+|\\;', repl='', string=value).split(';')).strip()
-        
+        # fix replace '"' with ''  and fix DKIM value
+        value = fix_TXT_Value(record['ResourceRecords'][0]['Value'])
         resource = set_ResourceName(record)
         recordName = set_RecordName(record['Name'])
         resources['SPF'][resource] = { 'name': recordName }  
@@ -540,17 +429,17 @@ def parse_zone(zone, rs):
 
 # render for all files
 def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
-    env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
+    
 
     # main.tf
-    template = env.get_template('main.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/main.tf', 'w') as target:
+    template = ENV.get_template('main.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/main.tf', 'w') as target:
         target.write(template.render(account_id=account_id, zoneName=zoneName))
 
     # Zone.tf
     # cloudflare_zone_name=zoneName - replacing the _ with .
-    template = env.get_template('Zone.tf.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/zone.tf', 'w') as target:
+    template = ENV.get_template('Zone.tf.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/zone.tf', 'w') as target:
         target.write(template.render(terrafromResource=zoneName, cloudflare_zone_name=zoneName.replace('_', '.')))
 
     # countRecords.txt
@@ -589,8 +478,8 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
         elif i['Type'] == 'SPF':
             awsSPFrecord += 1
 
-    template = env.get_template('countRecords.txt.j2')
-    with open("./"+AWS_ACCOUNTID+"/"+zoneName+'/countRecords.txt', 'w') as target:
+    template = ENV.get_template('countRecords.txt.j2')
+    with open(f'./{AWS_ACCOUNTID}/{zoneName}/countRecords.txt', 'w') as target:
         target.write(template.render(recordsCreated=recordsCreated, recordA=recordA, recordAAAA=recordAAAA,
         recordCANME=recordCANME, recordMX=recordMX, recordSRV=recordSRV, recordTXT=recordTXT, 
         recordNS=recordNS, awsArecord=awsArecord, awsAAAArecord=awsAAAArecord, awsMXrecord=awsMXrecord, 
@@ -599,20 +488,29 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
     
     # 0 subzones
     if recordNS == 0 and len(zoneName.split('_')) == 2:
-        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_noSubZones.txt', 'a') as target:
+        with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_noSubZones.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
     else:
-        with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_zonesWithSubDomains.txt', 'a') as target:
+        with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_zonesWithSubDomains.txt', 'a') as target:
             target.write(zoneName.replace('_', '.') + "\n")
 
     # nslookup                
     for item in resources:
         # create file only for the necessary records
         if not len(resources[item]) == 0:
-            env = jinja2.Environment(loader=jinja2.PackageLoader('terraform_named_cloudflare', 'templates'))
-            template = env.get_template(f'nslookup{item}.sh.j2')
+
+            parentDomain=zoneName.replace('_', '.')
+            #set parent domain name if subDomain has seperated Subzone
+            if int(len(zoneName.split("_"))) > 2:
+                parentDomainName = ""
+                for i in range(len(zoneName.split('_'))-2, len(zoneName.split('_'))):
+                    parentDomainName = parentDomainName +"."+ zoneName.split('_')[i]
+                    # remove the '.' from the start of the parent domain name
+                    parentDomain = parentDomainName[1:].replace('_', '.')
+
+            template = ENV.get_template(f'nslookup{item}.sh.j2')
             with open(f"./{AWS_ACCOUNTID}/{zoneName}/validateRecords/nslookup{item}.sh", 'a') as target:
-                target.write(template.render(resources=resources[item], parentDomain=zoneName.replace('_', '.'), 
+                target.write(template.render(resources=resources[item], parentDomain=parentDomain, 
                 cloudflare_ns_record=cloudflare_ns_record, space=" "))
 
             # Read in the file
@@ -645,19 +543,19 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record):
 
 def main():
     # get input parameters
-    args = parse_arguments().parse_args()
-    account_id = args.account_id
-    cloudflare_ns_record = args.ns_record
+    # args = parse_arguments().parse_args()
+    account_id = 111
+    cloudflare_ns_record = 222
     
     # get zones list
     client = boto3.client('route53')
     hostedzone=client.list_hosted_zones()
 
     # check if folder exists
-    if os.path.exists("./"+AWS_ACCOUNTID):
+    if os.path.exists(f'./{AWS_ACCOUNTID}'):
         pass
     else:
-        os.mkdir("./"+AWS_ACCOUNTID)
+        os.mkdir(f'./{AWS_ACCOUNTID}')
     
     # filter out private domains
     for zone in hostedzone["HostedZones"]:
@@ -668,16 +566,16 @@ def main():
             # set zone name for folder name and resource name
             zoneName = set_ZoneName(zone)
             # check if folder exists
-            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName):
+            if os.path.exists(f'./{AWS_ACCOUNTID}/{zoneName}'):
                 pass
             else:
-                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName)
+                os.mkdir(f'./{AWS_ACCOUNTID}/{zoneName}')
 
             # check if folder exists
-            if os.path.exists("./"+AWS_ACCOUNTID+"/"+zoneName+"/validateRecords"):
+            if os.path.exists(f'./{AWS_ACCOUNTID}/{zoneName}'+"/validateRecords"):
                 pass
             else:
-                os.mkdir("./"+AWS_ACCOUNTID+"/"+zoneName+"/validateRecords")
+                os.mkdir(f'./{AWS_ACCOUNTID}/{zoneName}'+"/validateRecords")
             
             # parsing through the records list and write records to 'record_type.tf'
             parse_zone(zone, rs)
@@ -698,7 +596,7 @@ def main():
         # if it's a private zone - write the filtered zone name to file
         else:
             zoneName = set_ZoneName(zone)
-            with open("./"+AWS_ACCOUNTID+'/'+AWS_ACCOUNTID+'_PrivateZoneFiltered.txt', 'a') as target:
+            with open(f'./{AWS_ACCOUNTID}/{AWS_ACCOUNTID}_PrivateZoneFiltered.txt', 'a') as target:
                 target.write(zoneName.replace('_', '.') + "\n")
 
 

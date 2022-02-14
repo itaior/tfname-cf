@@ -28,12 +28,12 @@ setup(
     license='MIT',
     long_description=readme(),
     long_description_content_type='text/markdown',
-    name='terraform_named_cloudflare',
+    name='route53_to_cloudflare',
     packages=[
-        'terraform_named_cloudflare'
+        'route53_to_cloudflare'
     ],
     scripts=[
-        'scripts/terraform-named-cloudflare'
+        'scripts/route53-to-cloudflare'
     ],
     url='https://github.com/itaior/tfname-cf',
     version='0.0.2',
