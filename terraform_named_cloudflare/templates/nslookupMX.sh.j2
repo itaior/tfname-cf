@@ -1,9 +1,0 @@
-#!/bin/bash
- 
-# Declare a string array with type
-declare -a StringArray=( {%- for resource in resources -%} "{{ resources[resource].name  }}" {% endfor -%})
- 
-# Read the array values with space
-for val in "${StringArray[@]}"; do
-  nslookup -type=[MX] $val {{ cloudflare_ns_record }} | grep "** server can't find" | awk '{print $5}' > errorMX.txt 
-done
