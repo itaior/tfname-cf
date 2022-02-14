@@ -9,7 +9,7 @@ import re
 import boto3
 import os
 from .mod.MX import set_MX_value
-from . mod.TXT import fix_TXT_Value, set_TXT_value
+from .mod.TXT import fix_TXT_Value, set_TXT_value
 
 globals
 AWS_ACCOUNTID="8984"
