@@ -533,21 +533,6 @@ def render(zone, rs, zoneName, account_id, cloudflare_ns_record, aws_account_id)
             with open(f"./{aws_account_id}/{zoneName}/validateRecords/nslookup{item}.sh", 'w') as file:
                 file.write(filedata)
     
-    # this loop will right the records to one file orderd by record type 
-    for item in resources:
-        # create file only for the necessary records
-        if not len(resources[item]) == 0:
-            # Read in the file
-            with open(f'./{aws_account_id}/{zoneName}/{item}.tf', 'r') as file :
-                filedata = file.read()
-            
-            # Write the file out again
-            with open(f"./{aws_account_id}/{zoneName}/records.tf", 'a') as file:
-                file.write(filedata)
-            
-            # delete the records file
-            os.remove(f'./{aws_account_id}/{zoneName}/{item}.tf')
-
 def main():
     # get input parameters
     args = parse_arguments().parse_args()
